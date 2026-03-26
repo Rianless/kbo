@@ -1216,17 +1216,17 @@ function App() {
         {TABS.map(t=>(
           <button key={t.id} onClick={()=>setTab(t.id)} style={{
             flex:1,
-            padding:"6px 0 5px",
+            padding:"4px 0 4px",
             background:"transparent",
             border:"none",
             display:"flex",flexDirection:"column",alignItems:"center",gap:"3px",
             color:tab===t.id?"#E31837":"rgba(255,255,255,0.35)",
             transition:"all 0.2s",
           }}>
-            <span style={{fontSize:"22px"}}>
+            <span style={{fontSize:"18px"}}>
               {t.id==="calendar"?"📅":t.id==="standings"?"🏆":"⭐"}
             </span>
-            <span style={{fontSize:"10px",fontWeight:tab===t.id?"700":"400",fontFamily:"'Noto Sans KR',sans-serif"}}>
+            <span style={{fontSize:"9px",fontWeight:tab===t.id?"700":"400",fontFamily:"'Noto Sans KR',sans-serif"}}>
               {t.id==="calendar"?"일정":t.id==="standings"?"순위":"주목"}
             </span>
             
