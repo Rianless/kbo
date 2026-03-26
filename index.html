@@ -1077,6 +1077,17 @@ function App() {
   useEffect(()=>{const t=setInterval(()=>setTime(new Date()),1000);return()=>clearInterval(t);},[]);
 
   const TABS=[{id:"calendar",label:"📅 일정"},{id:"standings",label:"🏆 순위"},{id:"leaders",label:"⭐ 주목"}];
+
+  // 모달 열릴 때 히스토리 추가, 뒤로가기 시 모달만 닫기
+  const openGame = (g) => {
+    setGame(g);
+    history.pushState({modal:true}, "");
+  };
+  useEffect(()=>{
+    const onPop = () => { setGame(null); };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
   const TAB_ORDER=["calendar","standings","leaders"];
 
   // 스와이프 핸들러 (좌우만, 상하 스크롤 방해 안함)
@@ -1134,7 +1145,7 @@ function App() {
       <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} style={{maxWidth:"600px",margin:"0 auto",padding:"14px 16px 62px"}}>
 
         {/* 일정 탭 */}
-        {tab==="calendar"&&<CalendarTab onSelect={setGame}/>}
+        {tab==="calendar"&&<CalendarTab onSelect={openGame}/>}
 
         {/* 순위 탭 */}
         {tab==="standings"&&(
