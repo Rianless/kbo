@@ -744,37 +744,6 @@ function Diamond({players, color}) {
         );
       })}
     </div>
-
-      {/* 하단 네비게이션 바 */}
-      <div style={{
-        position:"fixed",bottom:0,left:0,right:0,
-        background:"#111827",
-        borderTop:"1px solid rgba(255,255,255,0.08)",
-        display:"flex",
-        paddingBottom:"env(safe-area-inset-bottom)",
-        zIndex:50,
-      }}>
-        {TABS.map(t=>(
-          <button key={t.id} onClick={()=>setTab(t.id)} style={{
-            flex:1,
-            padding:"10px 0 8px",
-            background:"transparent",
-            border:"none",
-            display:"flex",flexDirection:"column",alignItems:"center",gap:"3px",
-            color:tab===t.id?"#E31837":"rgba(255,255,255,0.35)",
-            transition:"all 0.2s",
-          }}>
-            <span style={{fontSize:"20px"}}>
-              {t.id==="calendar"?"📅":t.id==="standings"?"🏆":"⭐"}
-            </span>
-            <span style={{fontSize:"10px",fontWeight:tab===t.id?"700":"400",fontFamily:"'Noto Sans KR',sans-serif"}}>
-              {t.id==="calendar"?"일정":t.id==="standings"?"순위":"주목"}
-            </span>
-            {tab===t.id&&<div style={{width:"4px",height:"4px",borderRadius:"50%",background:"#E31837"}}/>}
-          </button>
-        ))}
-      </div>
-    </div>
   );
 }
 
@@ -1251,6 +1220,36 @@ function App() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* 하단 네비게이션 바 */}
+      <div style={{
+        position:"fixed",bottom:0,left:0,right:0,
+        background:"#111827",
+        borderTop:"1px solid rgba(255,255,255,0.08)",
+        display:"flex",
+        paddingBottom:"12px",
+        zIndex:50,
+      }}>
+        {TABS.map(t=>(
+          <button key={t.id} onClick={()=>setTab(t.id)} style={{
+            flex:1,
+            padding:"10px 0 8px",
+            background:"transparent",
+            border:"none",
+            display:"flex",flexDirection:"column",alignItems:"center",gap:"3px",
+            color:tab===t.id?"#E31837":"rgba(255,255,255,0.35)",
+            transition:"all 0.2s",
+          }}>
+            <span style={{fontSize:"22px"}}>
+              {t.id==="calendar"?"📅":t.id==="standings"?"🏆":"⭐"}
+            </span>
+            <span style={{fontSize:"10px",fontWeight:tab===t.id?"700":"400",fontFamily:"'Noto Sans KR',sans-serif"}}>
+              {t.id==="calendar"?"일정":t.id==="standings"?"순위":"주목"}
+            </span>
+            {tab===t.id&&<div style={{width:"4px",height:"4px",borderRadius:"50%",background:"#E31837",marginTop:"1px"}}/>}
+          </button>
+        ))}
       </div>
     </div>
   );
