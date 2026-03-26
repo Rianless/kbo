@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <meta name="apple-mobile-web-app-title" content="KBO 🐯"/>
@@ -14,42 +14,34 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    body{background:#0A0E1A;color:#fff;font-family:'Inter',sans-serif;-webkit-tap-highlight-color:transparent}
+    body{background:#E8ECF1;color:#0A0E1A;font-family:'Inter',sans-serif;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
     @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-    @keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
-    button{cursor:pointer;-webkit-appearance:none}
-    body{overscroll-behavior:none}
-  
-  @keyframes slideUp {
-    from { transform: translateY(100%); opacity: 0; }
-    to   { transform: translateY(0);    opacity: 1; }
-  }
-  @keyframes slideDown {
-    from { transform: translateY(0);    opacity: 1; }
-    to   { transform: translateY(100%); opacity: 0; }
-  }
-</style>
+    @keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
+    @keyframes slideDown{from{transform:translateY(0);opacity:1}to{transform:translateY(100%);opacity:0}}
+    button{cursor:pointer;-webkit-appearance:none;border:none;outline:none}
+    input,textarea{outline:none}
+    ::-webkit-scrollbar{display:none}
+  </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const {useState,useEffect} = React;
+const {useState, useEffect, useRef} = React;
 
 const T = {
-  KIA: {name:"KIA 타이거즈", emoji:"🐯", color:"#E31837", img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/tigers.png"},
-  삼성: {name:"삼성 라이온즈", emoji:"🦁", color:"#1E4489", img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/lions.png"},
-  LG:  {name:"LG 트윈스",    emoji:"👥", color:"#C30452", img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/twins.png"},
-  두산: {name:"두산 베어스",  emoji:"🐻", color:"#1B2A6B", img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/bears.png"},
-  KT:  {name:"KT 위즈",      emoji:"🧙", color:"#444",    img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/wiz.png"},
-  SSG: {name:"SSG 랜더스",   emoji:"🚀", color:"#CE0E2D", img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/landers.png"},
-  롯데: {name:"롯데 자이언츠",emoji:"🕊️", color:"#002561", img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/giants.png"},
-  한화: {name:"한화 이글스",  emoji:"🦅", color:"#FF6600", img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/eagles.png"},
-  NC:  {name:"NC 다이노스",   emoji:"🦕", color:"#071D3B", img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/dinos.png"},
-  키움: {name:"키움 히어로즈",emoji:"⚔️", color:"#570514", img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/kiwoom.png"},
+  KIA:  {name:"KIA 타이거즈",  emoji:"🐯", color:"#E31837", img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/tigers.png"},
+  삼성:  {name:"삼성 라이온즈", emoji:"🦁", color:"#1E4489", img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/lions.png"},
+  LG:   {name:"LG 트윈스",     emoji:"👥", color:"#C30452", img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/twins.png"},
+  두산:  {name:"두산 베어스",   emoji:"🐻", color:"#1B2A6B", img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/bears.png"},
+  KT:   {name:"KT 위즈",       emoji:"🧙", color:"#444",    img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/wiz.png"},
+  SSG:  {name:"SSG 랜더스",    emoji:"🚀", color:"#CE0E2D", img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/landers.png"},
+  롯데:  {name:"롯데 자이언츠", emoji:"🕊️", color:"#002561", img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/giants.png"},
+  한화:  {name:"한화 이글스",   emoji:"🦅", color:"#FF6600", img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/eagles.png"},
+  NC:   {name:"NC 다이노스",    emoji:"🦕", color:"#071D3B", img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/dinos.png"},
+  키움:  {name:"키움 히어로즈", emoji:"⚔️", color:"#570514", img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/kiwoom.png"},
 };
 
 const KIA_SCH = [
-  // 3/28~29: 인천 원정 (vs SSG)
   {date:"2026-03-28",away:"KIA",home:"SSG",stad:"인천 SSG랜더스필드",time:"14:00",
    lineup:{
      away:[{n:"1",name:"김도영",p:"SS"},{n:"2",name:"최형우",p:"DH"},{n:"3",name:"나성범",p:"RF"},
@@ -60,52 +52,42 @@ const KIA_SCH = [
            {n:"7",name:"이재원",p:"C"},{n:"8",name:"전의산",p:"2B"},{n:"9",name:"정현",p:"DH"},{n:"P",name:"윌커슨",p:"P"}]
    }},
   {date:"2026-03-29",away:"KIA",home:"SSG",stad:"인천 SSG랜더스필드",time:"14:00"},
-  // 3/31~4/2: 잠실 원정 (vs LG)
-  {date:"2026-03-31",away:"KIA",home:"LG", stad:"잠실",               time:"18:30"},
-  {date:"2026-04-01",away:"KIA",home:"LG", stad:"잠실",               time:"18:30"},
-  {date:"2026-04-02",away:"KIA",home:"LG", stad:"잠실",               time:"18:30"},
-  // 4/3~5: 광주 홈 (vs NC) — 홈 개막전!
-  {date:"2026-04-03",away:"NC", home:"KIA",stad:"광주 챔피언스필드",  time:"18:30"},
-  {date:"2026-04-04",away:"NC", home:"KIA",stad:"광주 챔피언스필드",  time:"14:00"},
-  {date:"2026-04-05",away:"NC", home:"KIA",stad:"광주 챔피언스필드",  time:"14:00"},
-  // 4/7~9: 광주 홈 (vs 삼성)
-  {date:"2026-04-07",away:"삼성",home:"KIA",stad:"광주 챔피언스필드", time:"18:30"},
-  {date:"2026-04-08",away:"삼성",home:"KIA",stad:"광주 챔피언스필드", time:"18:30"},
-  {date:"2026-04-09",away:"삼성",home:"KIA",stad:"광주 챔피언스필드", time:"18:30"},
-  // 4/10~12: 대전 원정 (vs 한화) ← 이미지 기준 수정
+  {date:"2026-03-31",away:"KIA",home:"LG",stad:"잠실",time:"18:30"},
+  {date:"2026-04-01",away:"KIA",home:"LG",stad:"잠실",time:"18:30"},
+  {date:"2026-04-02",away:"KIA",home:"LG",stad:"잠실",time:"18:30"},
+  {date:"2026-04-03",away:"NC",home:"KIA",stad:"광주 챔피언스필드",time:"18:30"},
+  {date:"2026-04-04",away:"NC",home:"KIA",stad:"광주 챔피언스필드",time:"14:00"},
+  {date:"2026-04-05",away:"NC",home:"KIA",stad:"광주 챔피언스필드",time:"14:00"},
+  {date:"2026-04-07",away:"삼성",home:"KIA",stad:"광주 챔피언스필드",time:"18:30"},
+  {date:"2026-04-08",away:"삼성",home:"KIA",stad:"광주 챔피언스필드",time:"18:30"},
+  {date:"2026-04-09",away:"삼성",home:"KIA",stad:"광주 챔피언스필드",time:"18:30"},
   {date:"2026-04-10",away:"KIA",home:"한화",stad:"대전 한화생명볼파크",time:"18:30"},
   {date:"2026-04-11",away:"KIA",home:"한화",stad:"대전 한화생명볼파크",time:"14:00"},
   {date:"2026-04-12",away:"KIA",home:"한화",stad:"대전 한화생명볼파크",time:"14:00"},
-  // 4/14~16: 광주 홈 (vs 키움) ← 이미지 기준
-  {date:"2026-04-14",away:"키움",home:"KIA",stad:"광주 챔피언스필드", time:"18:30"},
-  {date:"2026-04-15",away:"키움",home:"KIA",stad:"광주 챔피언스필드", time:"18:30"},
-  {date:"2026-04-16",away:"키움",home:"KIA",stad:"광주 챔피언스필드", time:"18:30"},
-  // 4/17~19: 잠실 원정 (vs 두산)
-  {date:"2026-04-17",away:"KIA",home:"두산",stad:"잠실",              time:"18:30"},
-  {date:"2026-04-18",away:"KIA",home:"두산",stad:"잠실",              time:"14:00"},
-  {date:"2026-04-19",away:"KIA",home:"두산",stad:"잠실",              time:"14:00"},
-  // 4/21~23: 수원 원정 (vs KT)
-  {date:"2026-04-21",away:"KIA",home:"KT",  stad:"수원 KT위즈파크",  time:"18:30"},
-  {date:"2026-04-22",away:"KIA",home:"KT",  stad:"수원 KT위즈파크",  time:"18:30"},
-  {date:"2026-04-23",away:"KIA",home:"KT",  stad:"수원 KT위즈파크",  time:"18:30"},
-  // 4/24~26: 광주 홈 (vs 롯데)
-  {date:"2026-04-24",away:"롯데",home:"KIA",stad:"광주 챔피언스필드", time:"18:30"},
-  {date:"2026-04-25",away:"롯데",home:"KIA",stad:"광주 챔피언스필드", time:"14:00"},
-  {date:"2026-04-26",away:"롯데",home:"KIA",stad:"광주 챔피언스필드", time:"14:00"},
-  // 4/28~30: 창원 원정 (vs NC)
-  {date:"2026-04-28",away:"KIA",home:"NC",  stad:"창원 NC파크",      time:"18:30"},
-  {date:"2026-04-29",away:"KIA",home:"NC",  stad:"창원 NC파크",      time:"18:30"},
-  {date:"2026-04-30",away:"KIA",home:"NC",  stad:"창원 NC파크",      time:"18:30"},
-  // ─── 5월~8월 20일 KIA 일정 ───
-{date:"2026-05-01",away:"KT",home:"KIA",stad:"광주 챔피언스필드",time:"18:30"},
+  {date:"2026-04-14",away:"키움",home:"KIA",stad:"광주 챔피언스필드",time:"18:30"},
+  {date:"2026-04-15",away:"키움",home:"KIA",stad:"광주 챔피언스필드",time:"18:30"},
+  {date:"2026-04-16",away:"키움",home:"KIA",stad:"광주 챔피언스필드",time:"18:30"},
+  {date:"2026-04-17",away:"KIA",home:"두산",stad:"잠실",time:"18:30"},
+  {date:"2026-04-18",away:"KIA",home:"두산",stad:"잠실",time:"14:00"},
+  {date:"2026-04-19",away:"KIA",home:"두산",stad:"잠실",time:"14:00"},
+  {date:"2026-04-21",away:"KIA",home:"KT",stad:"수원 KT위즈파크",time:"18:30"},
+  {date:"2026-04-22",away:"KIA",home:"KT",stad:"수원 KT위즈파크",time:"18:30"},
+  {date:"2026-04-23",away:"KIA",home:"KT",stad:"수원 KT위즈파크",time:"18:30"},
+  {date:"2026-04-24",away:"롯데",home:"KIA",stad:"광주 챔피언스필드",time:"18:30"},
+  {date:"2026-04-25",away:"롯데",home:"KIA",stad:"광주 챔피언스필드",time:"14:00"},
+  {date:"2026-04-26",away:"롯데",home:"KIA",stad:"광주 챔피언스필드",time:"14:00"},
+  {date:"2026-04-28",away:"KIA",home:"NC",stad:"창원 NC파크",time:"18:30"},
+  {date:"2026-04-29",away:"KIA",home:"NC",stad:"창원 NC파크",time:"18:30"},
+  {date:"2026-04-30",away:"KIA",home:"NC",stad:"창원 NC파크",time:"18:30"},
+  {date:"2026-05-01",away:"KT",home:"KIA",stad:"광주 챔피언스필드",time:"18:30"},
   {date:"2026-05-02",away:"KT",home:"KIA",stad:"광주 챔피언스필드",time:"14:00"},
   {date:"2026-05-03",away:"KT",home:"KIA",stad:"광주 챔피언스필드",time:"14:00"},
   {date:"2026-05-05",away:"한화",home:"KIA",stad:"광주 챔피언스필드",time:"18:30"},
   {date:"2026-05-06",away:"한화",home:"KIA",stad:"광주 챔피언스필드",time:"18:30"},
   {date:"2026-05-07",away:"한화",home:"KIA",stad:"광주 챔피언스필드",time:"18:30"},
-  {date:"2026-05-08",away:"KIA",home:"롯데",stad:"광주 챔피언스필드",time:"18:30"},
-  {date:"2026-05-09",away:"KIA",home:"롯데",stad:"광주 챔피언스필드",time:"14:00"},
-  {date:"2026-05-10",away:"KIA",home:"롯데",stad:"광주 챔피언스필드",time:"14:00"},
+  {date:"2026-05-08",away:"KIA",home:"롯데",stad:"사직",time:"18:30"},
+  {date:"2026-05-09",away:"KIA",home:"롯데",stad:"사직",time:"14:00"},
+  {date:"2026-05-10",away:"KIA",home:"롯데",stad:"사직",time:"14:00"},
   {date:"2026-05-12",away:"두산",home:"KIA",stad:"광주 챔피언스필드",time:"18:30"},
   {date:"2026-05-13",away:"두산",home:"KIA",stad:"광주 챔피언스필드",time:"18:30"},
   {date:"2026-05-14",away:"두산",home:"KIA",stad:"광주 챔피언스필드",time:"18:30"},
@@ -115,9 +97,9 @@ const KIA_SCH = [
   {date:"2026-05-19",away:"LG",home:"KIA",stad:"광주 챔피언스필드",time:"18:30"},
   {date:"2026-05-20",away:"LG",home:"KIA",stad:"광주 챔피언스필드",time:"18:30"},
   {date:"2026-05-21",away:"LG",home:"KIA",stad:"광주 챔피언스필드",time:"18:30"},
-  {date:"2026-05-22",away:"SSG",home:"KIA",stad:"대구 삼성라이온즈파크",time:"18:30"},
-  {date:"2026-05-23",away:"SSG",home:"KIA",stad:"대구 삼성라이온즈파크",time:"14:00"},
-  {date:"2026-05-24",away:"SSG",home:"KIA",stad:"대구 삼성라이온즈파크",time:"14:00"},
+  {date:"2026-05-22",away:"SSG",home:"KIA",stad:"광주 챔피언스필드",time:"18:30"},
+  {date:"2026-05-23",away:"SSG",home:"KIA",stad:"광주 챔피언스필드",time:"14:00"},
+  {date:"2026-05-24",away:"SSG",home:"KIA",stad:"광주 챔피언스필드",time:"14:00"},
   {date:"2026-05-26",away:"KIA",home:"키움",stad:"고척 스카이돔",time:"18:30"},
   {date:"2026-05-27",away:"KIA",home:"키움",stad:"고척 스카이돔",time:"18:30"},
   {date:"2026-05-28",away:"KIA",home:"키움",stad:"고척 스카이돔",time:"18:30"},
@@ -154,9 +136,9 @@ const KIA_SCH = [
   {date:"2026-07-03",away:"NC",home:"KIA",stad:"광주 챔피언스필드",time:"18:30"},
   {date:"2026-07-04",away:"NC",home:"KIA",stad:"광주 챔피언스필드",time:"19:00"},
   {date:"2026-07-05",away:"NC",home:"KIA",stad:"광주 챔피언스필드",time:"17:00"},
-  {date:"2026-07-07",away:"KIA",home:"롯데",stad:"광주 챔피언스필드",time:"18:30"},
-  {date:"2026-07-08",away:"KIA",home:"롯데",stad:"광주 챔피언스필드",time:"18:30"},
-  {date:"2026-07-09",away:"KIA",home:"롯데",stad:"광주 챔피언스필드",time:"18:30"},
+  {date:"2026-07-07",away:"KIA",home:"롯데",stad:"사직",time:"18:30"},
+  {date:"2026-07-08",away:"KIA",home:"롯데",stad:"사직",time:"18:30"},
+  {date:"2026-07-09",away:"KIA",home:"롯데",stad:"사직",time:"18:30"},
   {date:"2026-07-16",away:"KIA",home:"SSG",stad:"인천 SSG랜더스필드",time:"18:30"},
   {date:"2026-07-17",away:"KIA",home:"SSG",stad:"인천 SSG랜더스필드",time:"18:30"},
   {date:"2026-07-18",away:"KIA",home:"SSG",stad:"인천 SSG랜더스필드",time:"19:00"},
@@ -190,526 +172,17 @@ const KIA_SCH = [
   {date:"2026-08-20",away:"KIA",home:"키움",stad:"고척 스카이돔",time:"18:30"},
 ];
 
-const ALL_SCH = [...KIA_SCH,
-  // ─── 3월 28~29일 개막 2연전 (토·일 14:00) ───
-  {date:"2026-03-28",away:"KT",  home:"LG",  stad:"잠실",                 time:"14:00"},
-  {date:"2026-03-28",away:"키움",home:"한화", stad:"대전 한화생명볼파크",  time:"14:00"},
-  {date:"2026-03-28",away:"롯데",home:"삼성", stad:"대구 삼성라이온즈파크",time:"14:00"},
-  {date:"2026-03-28",away:"두산",home:"NC",   stad:"창원 NC파크",          time:"14:00"},
-  {date:"2026-03-29",away:"KT",  home:"LG",  stad:"잠실",                 time:"14:00"},
-  {date:"2026-03-29",away:"키움",home:"한화", stad:"대전 한화생명볼파크",  time:"14:00"},
-  {date:"2026-03-29",away:"롯데",home:"삼성", stad:"대구 삼성라이온즈파크",time:"14:00"},
-  {date:"2026-03-29",away:"두산",home:"NC",   stad:"창원 NC파크",          time:"14:00"},
-
-  // ─── 3월 31일 ~ 4월 2일 (화~목 18:30) ───
-  // 잠실:KIA-LG / 고척:키움-SSG / 수원:KT-한화 / 대구:두산-삼성 / 사직:롯데-NC
-  {date:"2026-03-31",away:"키움",home:"SSG", stad:"인천 SSG랜더스필드",   time:"18:30"},
-  {date:"2026-03-31",away:"KT",  home:"한화", stad:"대전 한화생명볼파크",  time:"18:30"},
-  {date:"2026-03-31",away:"두산",home:"삼성", stad:"대구 삼성라이온즈파크",time:"18:30"},
-  {date:"2026-03-31",away:"롯데",home:"NC",   stad:"창원 NC파크",          time:"18:30"},
-  {date:"2026-04-01",away:"키움",home:"SSG", stad:"인천 SSG랜더스필드",   time:"18:30"},
-  {date:"2026-04-01",away:"KT",  home:"한화", stad:"대전 한화생명볼파크",  time:"18:30"},
-  {date:"2026-04-01",away:"두산",home:"삼성", stad:"대구 삼성라이온즈파크",time:"18:30"},
-  {date:"2026-04-01",away:"롯데",home:"NC",   stad:"창원 NC파크",          time:"18:30"},
-  {date:"2026-04-02",away:"키움",home:"SSG", stad:"인천 SSG랜더스필드",   time:"18:30"},
-  {date:"2026-04-02",away:"KT",  home:"한화", stad:"대전 한화생명볼파크",  time:"18:30"},
-  {date:"2026-04-02",away:"두산",home:"삼성", stad:"대구 삼성라이온즈파크",time:"18:30"},
-  {date:"2026-04-02",away:"롯데",home:"NC",   stad:"창원 NC파크",          time:"18:30"},
-
-  // ─── 4월 3~5일 (금~일) ───
-  // 잠실:한화-두산 / 고척:LG-키움 / 수원:삼성-KT / 광주:NC-KIA / 사직:SSG-롯데
-  {date:"2026-04-03",away:"한화",home:"두산", stad:"잠실",                 time:"18:30"},
-  {date:"2026-04-03",away:"LG",  home:"키움", stad:"고척 스카이돔",        time:"18:30"},
-  {date:"2026-04-03",away:"삼성",home:"KT",   stad:"수원 KT위즈파크",      time:"18:30"},
-  {date:"2026-04-03",away:"SSG", home:"롯데", stad:"사직",                 time:"18:30"},
-  {date:"2026-04-04",away:"한화",home:"두산", stad:"잠실",                 time:"14:00"},
-  {date:"2026-04-04",away:"LG",  home:"키움", stad:"고척 스카이돔",        time:"14:00"},
-  {date:"2026-04-04",away:"삼성",home:"KT",   stad:"수원 KT위즈파크",      time:"14:00"},
-  {date:"2026-04-04",away:"SSG", home:"롯데", stad:"사직",                 time:"14:00"},
-  {date:"2026-04-05",away:"한화",home:"두산", stad:"잠실",                 time:"14:00"},
-  {date:"2026-04-05",away:"LG",  home:"키움", stad:"고척 스카이돔",        time:"14:00"},
-  {date:"2026-04-05",away:"삼성",home:"KT",   stad:"수원 KT위즈파크",      time:"14:00"},
-  {date:"2026-04-05",away:"SSG", home:"롯데", stad:"사직",                 time:"14:00"},
-
-  // ─── 4월 7~9일 (화~목 18:30) ───
-  // 잠실:키움-두산 / 대전:한화-SSG / 대구:삼성-KIA / 사직:KT-롯데 / 창원:LG-NC
-  {date:"2026-04-07",away:"키움",home:"두산", stad:"잠실",                 time:"18:30"},
-  {date:"2026-04-07",away:"한화",home:"SSG", stad:"인천 SSG랜더스필드",   time:"18:30"},
-  {date:"2026-04-07",away:"KT",  home:"롯데", stad:"사직",                 time:"18:30"},
-  {date:"2026-04-07",away:"LG",  home:"NC",   stad:"창원 NC파크",          time:"18:30"},
-  {date:"2026-04-08",away:"키움",home:"두산", stad:"잠실",                 time:"18:30"},
-  {date:"2026-04-08",away:"한화",home:"SSG", stad:"인천 SSG랜더스필드",   time:"18:30"},
-  {date:"2026-04-08",away:"KT",  home:"롯데", stad:"사직",                 time:"18:30"},
-  {date:"2026-04-08",away:"LG",  home:"NC",   stad:"창원 NC파크",          time:"18:30"},
-  {date:"2026-04-09",away:"키움",home:"두산", stad:"잠실",                 time:"18:30"},
-  {date:"2026-04-09",away:"한화",home:"SSG", stad:"인천 SSG랜더스필드",   time:"18:30"},
-  {date:"2026-04-09",away:"KT",  home:"롯데", stad:"사직",                 time:"18:30"},
-  {date:"2026-04-09",away:"LG",  home:"NC",   stad:"창원 NC파크",          time:"18:30"},
-
-  // ─── 4월 10~12일 (금~일) ───
-  // 잠실:SSG-LG / 고척:롯데-키움 / 수원:두산-KT / 대전:KIA-한화 / 대구:NC-삼성
-  {date:"2026-04-10",away:"SSG", home:"LG",   stad:"잠실",                 time:"18:30"},
-  {date:"2026-04-10",away:"롯데",home:"키움", stad:"고척 스카이돔",        time:"18:30"},
-  {date:"2026-04-10",away:"두산",home:"KT",   stad:"수원 KT위즈파크",      time:"18:30"},
-  {date:"2026-04-10",away:"NC",  home:"삼성", stad:"대구 삼성라이온즈파크",time:"18:30"},
-  {date:"2026-04-11",away:"SSG", home:"LG",   stad:"잠실",                 time:"14:00"},
-  {date:"2026-04-11",away:"롯데",home:"키움", stad:"고척 스카이돔",        time:"14:00"},
-  {date:"2026-04-11",away:"두산",home:"KT",   stad:"수원 KT위즈파크",      time:"14:00"},
-  {date:"2026-04-11",away:"NC",  home:"삼성", stad:"대구 삼성라이온즈파크",time:"14:00"},
-  {date:"2026-04-12",away:"SSG", home:"LG",   stad:"잠실",                 time:"14:00"},
-  {date:"2026-04-12",away:"롯데",home:"키움", stad:"고척 스카이돔",        time:"14:00"},
-  {date:"2026-04-12",away:"두산",home:"KT",   stad:"수원 KT위즈파크",      time:"14:00"},
-  {date:"2026-04-12",away:"NC",  home:"삼성", stad:"대구 삼성라이온즈파크",time:"14:00"},
-
-  // ─── 4월 14~16일 (화~목 18:30) ───
-  // 잠실:롯데-LG / 문학:두산-SSG / 대전:삼성-한화 / 광주:키움-KIA / 창원:KT-NC
-  {date:"2026-04-14",away:"롯데",home:"LG",   stad:"잠실",                 time:"18:30"},
-  {date:"2026-04-14",away:"두산",home:"SSG", stad:"인천 SSG랜더스필드",   time:"18:30"},
-  {date:"2026-04-14",away:"삼성",home:"한화", stad:"대전 한화생명볼파크",  time:"18:30"},
-  {date:"2026-04-14",away:"KT",  home:"NC",   stad:"창원 NC파크",          time:"18:30"},
-  {date:"2026-04-15",away:"롯데",home:"LG",   stad:"잠실",                 time:"18:30"},
-  {date:"2026-04-15",away:"두산",home:"SSG", stad:"인천 SSG랜더스필드",   time:"18:30"},
-  {date:"2026-04-15",away:"삼성",home:"한화", stad:"대전 한화생명볼파크",  time:"18:30"},
-  {date:"2026-04-15",away:"KT",  home:"NC",   stad:"창원 NC파크",          time:"18:30"},
-  {date:"2026-04-16",away:"롯데",home:"LG",   stad:"잠실",                 time:"18:30"},
-  {date:"2026-04-16",away:"두산",home:"SSG", stad:"인천 SSG랜더스필드",   time:"18:30"},
-  {date:"2026-04-16",away:"삼성",home:"한화", stad:"대전 한화생명볼파크",  time:"18:30"},
-  {date:"2026-04-16",away:"KT",  home:"NC",   stad:"창원 NC파크",          time:"18:30"},
-
-  // ─── 4월 17~19일 (금~일) ───
-  // 잠실:KIA-두산 / 고척:키움-KT / 대구:LG-삼성 / 사직:한화-롯데 / 창원:SSG-NC
-  {date:"2026-04-17",away:"키움",home:"KT",   stad:"수원 KT위즈파크",      time:"18:30"},
-  {date:"2026-04-17",away:"LG",  home:"삼성", stad:"대구 삼성라이온즈파크",time:"18:30"},
-  {date:"2026-04-17",away:"한화",home:"롯데", stad:"사직",                 time:"18:30"},
-  {date:"2026-04-17",away:"SSG", home:"NC",   stad:"창원 NC파크",          time:"18:30"},
-  {date:"2026-04-18",away:"키움",home:"KT",   stad:"수원 KT위즈파크",      time:"14:00"},
-  {date:"2026-04-18",away:"LG",  home:"삼성", stad:"대구 삼성라이온즈파크",time:"14:00"},
-  {date:"2026-04-18",away:"한화",home:"롯데", stad:"사직",                 time:"14:00"},
-  {date:"2026-04-18",away:"SSG", home:"NC",   stad:"창원 NC파크",          time:"14:00"},
-  {date:"2026-04-19",away:"키움",home:"KT",   stad:"수원 KT위즈파크",      time:"14:00"},
-  {date:"2026-04-19",away:"LG",  home:"삼성", stad:"대구 삼성라이온즈파크",time:"14:00"},
-  {date:"2026-04-19",away:"한화",home:"롯데", stad:"사직",                 time:"14:00"},
-  {date:"2026-04-19",away:"SSG", home:"NC",   stad:"창원 NC파크",          time:"14:00"},
-
-  // ─── 4월 21~23일 (화~목 18:30) ───
-  // 잠실:한화-LG / 고척:NC-키움 / 수원:KIA-KT / 대구:SSG-삼성 / 사직:두산-롯데
-  {date:"2026-04-21",away:"한화",home:"LG",   stad:"잠실",                 time:"18:30"},
-  {date:"2026-04-21",away:"NC",  home:"키움", stad:"고척 스카이돔",        time:"18:30"},
-  {date:"2026-04-21",away:"SSG", home:"삼성", stad:"대구 삼성라이온즈파크",time:"18:30"},
-  {date:"2026-04-21",away:"두산",home:"롯데", stad:"사직",                 time:"18:30"},
-  {date:"2026-04-22",away:"한화",home:"LG",   stad:"잠실",                 time:"18:30"},
-  {date:"2026-04-22",away:"NC",  home:"키움", stad:"고척 스카이돔",        time:"18:30"},
-  {date:"2026-04-22",away:"SSG", home:"삼성", stad:"대구 삼성라이온즈파크",time:"18:30"},
-  {date:"2026-04-22",away:"두산",home:"롯데", stad:"사직",                 time:"18:30"},
-  {date:"2026-04-23",away:"한화",home:"LG",   stad:"잠실",                 time:"18:30"},
-  {date:"2026-04-23",away:"NC",  home:"키움", stad:"고척 스카이돔",        time:"18:30"},
-  {date:"2026-04-23",away:"SSG", home:"삼성", stad:"대구 삼성라이온즈파크",time:"18:30"},
-  {date:"2026-04-23",away:"두산",home:"롯데", stad:"사직",                 time:"18:30"},
-
-  // ─── 4월 24~26일 (금~일) ───
-  // 잠실:LG-두산 / 고척:삼성-키움 / 수원:KT-SSG / 대전:NC-한화 / 광주:롯데-KIA
-  {date:"2026-04-24",away:"LG",  home:"두산", stad:"잠실",                 time:"18:30"},
-  {date:"2026-04-24",away:"삼성",home:"키움", stad:"고척 스카이돔",        time:"18:30"},
-  {date:"2026-04-24",away:"KT",  home:"SSG", stad:"인천 SSG랜더스필드",   time:"18:30"},
-  {date:"2026-04-24",away:"NC",  home:"한화", stad:"대전 한화생명볼파크",  time:"18:30"},
-  {date:"2026-04-25",away:"LG",  home:"두산", stad:"잠실",                 time:"14:00"},
-  {date:"2026-04-25",away:"삼성",home:"키움", stad:"고척 스카이돔",        time:"14:00"},
-  {date:"2026-04-25",away:"KT",  home:"SSG", stad:"인천 SSG랜더스필드",   time:"14:00"},
-  {date:"2026-04-25",away:"NC",  home:"한화", stad:"대전 한화생명볼파크",  time:"14:00"},
-  {date:"2026-04-26",away:"LG",  home:"두산", stad:"잠실",                 time:"14:00"},
-  {date:"2026-04-26",away:"삼성",home:"키움", stad:"고척 스카이돔",        time:"14:00"},
-  {date:"2026-04-26",away:"KT",  home:"SSG", stad:"인천 SSG랜더스필드",   time:"14:00"},
-  {date:"2026-04-26",away:"NC",  home:"한화", stad:"대전 한화생명볼파크",  time:"14:00"},
-
-  // ─── 4월 28~30일 (화~목 18:30) ───
-  // 잠실:삼성-두산 / 수원:LG-KT / 대전:SSG-한화 / 사직:키움-롯데 / 창원:KIA-NC
-  {date:"2026-04-28",away:"삼성",home:"두산", stad:"잠실",                 time:"18:30"},
-  {date:"2026-04-28",away:"LG",  home:"KT",   stad:"수원 KT위즈파크",      time:"18:30"},
-  {date:"2026-04-28",away:"SSG", home:"한화", stad:"대전 한화생명볼파크",  time:"18:30"},
-  {date:"2026-04-28",away:"키움",home:"롯데", stad:"사직",                 time:"18:30"},
-  {date:"2026-04-29",away:"삼성",home:"두산", stad:"잠실",                 time:"18:30"},
-  {date:"2026-04-29",away:"LG",  home:"KT",   stad:"수원 KT위즈파크",      time:"18:30"},
-  {date:"2026-04-29",away:"SSG", home:"한화", stad:"대전 한화생명볼파크",  time:"18:30"},
-  {date:"2026-04-29",away:"키움",home:"롯데", stad:"사직",                 time:"18:30"},
-  {date:"2026-04-30",away:"삼성",home:"두산", stad:"잠실",                 time:"18:30"},
-  {date:"2026-04-30",away:"LG",  home:"KT",   stad:"수원 KT위즈파크",      time:"18:30"},
-  {date:"2026-04-30",away:"SSG", home:"한화", stad:"대전 한화생명볼파크",  time:"18:30"},
-  {date:"2026-04-30",away:"키움",home:"롯데", stad:"사직",                 time:"18:30"},
-  // ─── 5월~8월 20일 전체 일정 ───
-{date:"2026-05-01",away:"NC",home:"LG",stad:"잠실",time:"18:30"},
-  {date:"2026-05-01",away:"두산",home:"키움",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-05-01",away:"롯데",home:"SSG",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-05-01",away:"한화",home:"삼성",stad:"대전 한화생명볼파크",time:"18:30"},
-  {date:"2026-05-02",away:"NC",home:"LG",stad:"잠실",time:"14:00"},
-  {date:"2026-05-02",away:"두산",home:"키움",stad:"고척 스카이돔",time:"14:00"},
-  {date:"2026-05-02",away:"롯데",home:"SSG",stad:"인천 SSG랜더스필드",time:"14:00"},
-  {date:"2026-05-02",away:"한화",home:"삼성",stad:"대전 한화생명볼파크",time:"14:00"},
-  {date:"2026-05-03",away:"NC",home:"LG",stad:"잠실",time:"14:00"},
-  {date:"2026-05-03",away:"두산",home:"키움",stad:"고척 스카이돔",time:"14:00"},
-  {date:"2026-05-03",away:"롯데",home:"SSG",stad:"인천 SSG랜더스필드",time:"14:00"},
-  {date:"2026-05-03",away:"한화",home:"삼성",stad:"대전 한화생명볼파크",time:"14:00"},
-  {date:"2026-05-05",away:"두산",home:"LG",stad:"잠실",time:"18:30"},
-  {date:"2026-05-05",away:"NC",home:"SSG",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-05-05",away:"롯데",home:"KT",stad:"수원 KT위즈파크",time:"18:30"},
-  {date:"2026-05-05",away:"키움",home:"삼성",stad:"대구 삼성라이온즈파크",time:"18:30"},
-  {date:"2026-05-06",away:"두산",home:"LG",stad:"잠실",time:"18:30"},
-  {date:"2026-05-06",away:"NC",home:"SSG",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-05-06",away:"롯데",home:"KT",stad:"수원 KT위즈파크",time:"18:30"},
-  {date:"2026-05-06",away:"키움",home:"삼성",stad:"대구 삼성라이온즈파크",time:"18:30"},
-  {date:"2026-05-07",away:"두산",home:"LG",stad:"잠실",time:"18:30"},
-  {date:"2026-05-07",away:"NC",home:"SSG",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-05-07",away:"롯데",home:"KT",stad:"수원 KT위즈파크",time:"18:30"},
-  {date:"2026-05-07",away:"키움",home:"삼성",stad:"대구 삼성라이온즈파크",time:"18:30"},
-  {date:"2026-05-08",away:"SSG",home:"두산",stad:"잠실",time:"18:30"},
-  {date:"2026-05-08",away:"KT",home:"키움",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-05-08",away:"LG",home:"한화",stad:"대전 한화생명볼파크",time:"18:30"},
-  {date:"2026-05-08",away:"삼성",home:"NC",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-05-09",away:"SSG",home:"두산",stad:"잠실",time:"14:00"},
-  {date:"2026-05-09",away:"KT",home:"키움",stad:"고척 스카이돔",time:"14:00"},
-  {date:"2026-05-09",away:"LG",home:"한화",stad:"대전 한화생명볼파크",time:"14:00"},
-  {date:"2026-05-09",away:"삼성",home:"NC",stad:"창원 NC파크",time:"14:00"},
-  {date:"2026-05-10",away:"SSG",home:"두산",stad:"잠실",time:"14:00"},
-  {date:"2026-05-10",away:"KT",home:"키움",stad:"고척 스카이돔",time:"14:00"},
-  {date:"2026-05-10",away:"LG",home:"한화",stad:"대전 한화생명볼파크",time:"14:00"},
-  {date:"2026-05-10",away:"삼성",home:"NC",stad:"창원 NC파크",time:"14:00"},
-  {date:"2026-05-12",away:"삼성",home:"LG",stad:"잠실",time:"18:30"},
-  {date:"2026-05-12",away:"한화",home:"키움",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-05-12",away:"SSG",home:"KT",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-05-12",away:"NC",home:"롯데",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-05-13",away:"삼성",home:"LG",stad:"잠실",time:"18:30"},
-  {date:"2026-05-13",away:"한화",home:"키움",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-05-13",away:"SSG",home:"KT",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-05-13",away:"NC",home:"롯데",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-05-14",away:"삼성",home:"LG",stad:"잠실",time:"18:30"},
-  {date:"2026-05-14",away:"한화",home:"키움",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-05-14",away:"SSG",home:"KT",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-05-14",away:"NC",home:"롯데",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-05-15",away:"롯데",home:"두산",stad:"잠실",time:"18:30"},
-  {date:"2026-05-15",away:"LG",home:"SSG",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-05-15",away:"한화",home:"KT",stad:"대전 한화생명볼파크",time:"18:30"},
-  {date:"2026-05-15",away:"키움",home:"NC",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-05-16",away:"롯데",home:"두산",stad:"잠실",time:"14:00"},
-  {date:"2026-05-16",away:"LG",home:"SSG",stad:"인천 SSG랜더스필드",time:"14:00"},
-  {date:"2026-05-16",away:"한화",home:"KT",stad:"대전 한화생명볼파크",time:"14:00"},
-  {date:"2026-05-16",away:"키움",home:"NC",stad:"창원 NC파크",time:"14:00"},
-  {date:"2026-05-17",away:"롯데",home:"두산",stad:"잠실",time:"14:00"},
-  {date:"2026-05-17",away:"LG",home:"SSG",stad:"인천 SSG랜더스필드",time:"14:00"},
-  {date:"2026-05-17",away:"한화",home:"KT",stad:"대전 한화생명볼파크",time:"14:00"},
-  {date:"2026-05-17",away:"키움",home:"NC",stad:"창원 NC파크",time:"14:00"},
-  {date:"2026-05-19",away:"NC",home:"두산",stad:"잠실",time:"18:30"},
-  {date:"2026-05-19",away:"SSG",home:"키움",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-05-19",away:"롯데",home:"한화",stad:"대전 한화생명볼파크",time:"18:30"},
-  {date:"2026-05-19",away:"KT",home:"삼성",stad:"대구 삼성라이온즈파크",time:"18:30"},
-  {date:"2026-05-20",away:"NC",home:"두산",stad:"잠실",time:"18:30"},
-  {date:"2026-05-20",away:"SSG",home:"키움",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-05-20",away:"롯데",home:"한화",stad:"대전 한화생명볼파크",time:"18:30"},
-  {date:"2026-05-20",away:"KT",home:"삼성",stad:"대구 삼성라이온즈파크",time:"18:30"},
-  {date:"2026-05-21",away:"NC",home:"두산",stad:"잠실",time:"18:30"},
-  {date:"2026-05-21",away:"SSG",home:"키움",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-05-21",away:"롯데",home:"한화",stad:"대전 한화생명볼파크",time:"18:30"},
-  {date:"2026-05-21",away:"KT",home:"삼성",stad:"대구 삼성라이온즈파크",time:"18:30"},
-  {date:"2026-05-22",away:"키움",home:"LG",stad:"잠실",time:"18:30"},
-  {date:"2026-05-22",away:"NC",home:"KT",stad:"수원 KT위즈파크",time:"18:30"},
-  {date:"2026-05-22",away:"두산",home:"한화",stad:"대전 한화생명볼파크",time:"18:30"},
-  {date:"2026-05-22",away:"삼성",home:"롯데",stad:"사직",time:"18:30"},
-  {date:"2026-05-23",away:"키움",home:"LG",stad:"잠실",time:"14:00"},
-  {date:"2026-05-23",away:"NC",home:"KT",stad:"수원 KT위즈파크",time:"14:00"},
-  {date:"2026-05-23",away:"두산",home:"한화",stad:"대전 한화생명볼파크",time:"14:00"},
-  {date:"2026-05-23",away:"삼성",home:"롯데",stad:"사직",time:"14:00"},
-  {date:"2026-05-24",away:"키움",home:"LG",stad:"잠실",time:"14:00"},
-  {date:"2026-05-24",away:"NC",home:"KT",stad:"수원 KT위즈파크",time:"14:00"},
-  {date:"2026-05-24",away:"두산",home:"한화",stad:"대전 한화생명볼파크",time:"14:00"},
-  {date:"2026-05-24",away:"삼성",home:"롯데",stad:"사직",time:"14:00"},
-  {date:"2026-05-26",away:"KT",home:"두산",stad:"잠실",time:"18:30"},
-  {date:"2026-05-26",away:"삼성",home:"SSG",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-05-26",away:"LG",home:"롯데",stad:"사직",time:"18:30"},
-  {date:"2026-05-26",away:"한화",home:"NC",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-05-27",away:"KT",home:"두산",stad:"잠실",time:"18:30"},
-  {date:"2026-05-27",away:"삼성",home:"SSG",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-05-27",away:"LG",home:"롯데",stad:"사직",time:"18:30"},
-  {date:"2026-05-27",away:"한화",home:"NC",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-05-28",away:"KT",home:"두산",stad:"잠실",time:"18:30"},
-  {date:"2026-05-28",away:"삼성",home:"SSG",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-05-28",away:"LG",home:"롯데",stad:"사직",time:"18:30"},
-  {date:"2026-05-28",away:"한화",home:"NC",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-05-29",away:"KT",home:"키움",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-05-29",away:"SSG",home:"한화",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-05-29",away:"두산",home:"삼성",stad:"대전 한화생명볼파크",time:"18:30"},
-  {date:"2026-05-29",away:"롯데",home:"NC",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-05-30",away:"KT",home:"키움",stad:"고척 스카이돔",time:"14:00"},
-  {date:"2026-05-30",away:"SSG",home:"한화",stad:"인천 SSG랜더스필드",time:"14:00"},
-  {date:"2026-05-30",away:"두산",home:"삼성",stad:"대전 한화생명볼파크",time:"14:00"},
-  {date:"2026-05-30",away:"롯데",home:"NC",stad:"창원 NC파크",time:"14:00"},
-  {date:"2026-05-31",away:"KT",home:"키움",stad:"고척 스카이돔",time:"14:00"},
-  {date:"2026-05-31",away:"SSG",home:"한화",stad:"인천 SSG랜더스필드",time:"14:00"},
-  {date:"2026-05-31",away:"두산",home:"삼성",stad:"대전 한화생명볼파크",time:"14:00"},
-  {date:"2026-05-31",away:"롯데",home:"NC",stad:"창원 NC파크",time:"14:00"},
-  {date:"2026-06-02",away:"한화",home:"두산",stad:"잠실",time:"18:30"},
-  {date:"2026-06-02",away:"키움",home:"SSG",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-06-02",away:"LG",home:"KT",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-06-02",away:"NC",home:"삼성",stad:"대구 삼성라이온즈파크",time:"18:30"},
-  {date:"2026-06-03",away:"한화",home:"두산",stad:"잠실",time:"18:30"},
-  {date:"2026-06-03",away:"키움",home:"SSG",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-06-03",away:"LG",home:"KT",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-06-03",away:"NC",home:"삼성",stad:"대구 삼성라이온즈파크",time:"18:30"},
-  {date:"2026-06-04",away:"한화",home:"두산",stad:"잠실",time:"18:30"},
-  {date:"2026-06-04",away:"키움",home:"SSG",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-06-04",away:"LG",home:"KT",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-06-04",away:"NC",home:"삼성",stad:"대구 삼성라이온즈파크",time:"18:30"},
-  {date:"2026-06-05",away:"키움",home:"두산",stad:"잠실",time:"18:30"},
-  {date:"2026-06-05",away:"KT",home:"SSG",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-06-05",away:"한화",home:"롯데",stad:"사직",time:"18:30"},
-  {date:"2026-06-05",away:"LG",home:"NC",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-06-06",away:"키움",home:"두산",stad:"잠실",time:"14:00"},
-  {date:"2026-06-06",away:"KT",home:"SSG",stad:"고척 스카이돔",time:"14:00"},
-  {date:"2026-06-06",away:"한화",home:"롯데",stad:"사직",time:"14:00"},
-  {date:"2026-06-06",away:"LG",home:"NC",stad:"창원 NC파크",time:"14:00"},
-  {date:"2026-06-07",away:"키움",home:"두산",stad:"잠실",time:"14:00"},
-  {date:"2026-06-07",away:"KT",home:"SSG",stad:"고척 스카이돔",time:"14:00"},
-  {date:"2026-06-07",away:"한화",home:"롯데",stad:"사직",time:"14:00"},
-  {date:"2026-06-07",away:"LG",home:"NC",stad:"창원 NC파크",time:"14:00"},
-  {date:"2026-06-09",away:"SSG",home:"LG",stad:"잠실",time:"18:30"},
-  {date:"2026-06-09",away:"NC",home:"키움",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-06-09",away:"삼성",home:"KT",stad:"수원 KT위즈파크",time:"18:30"},
-  {date:"2026-06-09",away:"두산",home:"롯데",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-06-10",away:"SSG",home:"LG",stad:"잠실",time:"18:30"},
-  {date:"2026-06-10",away:"NC",home:"키움",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-06-10",away:"삼성",home:"KT",stad:"수원 KT위즈파크",time:"18:30"},
-  {date:"2026-06-10",away:"두산",home:"롯데",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-06-11",away:"SSG",home:"LG",stad:"잠실",time:"18:30"},
-  {date:"2026-06-11",away:"NC",home:"키움",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-06-11",away:"삼성",home:"KT",stad:"수원 KT위즈파크",time:"18:30"},
-  {date:"2026-06-11",away:"두산",home:"롯데",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-06-12",away:"롯데",home:"LG",stad:"잠실",time:"18:30"},
-  {date:"2026-06-12",away:"한화",home:"키움",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-06-12",away:"NC",home:"KT",stad:"수원 KT위즈파크",time:"18:30"},
-  {date:"2026-06-12",away:"SSG",home:"삼성",stad:"대구 삼성라이온즈파크",time:"18:30"},
-  {date:"2026-06-13",away:"롯데",home:"LG",stad:"잠실",time:"14:00"},
-  {date:"2026-06-13",away:"한화",home:"키움",stad:"고척 스카이돔",time:"14:00"},
-  {date:"2026-06-13",away:"NC",home:"KT",stad:"수원 KT위즈파크",time:"14:00"},
-  {date:"2026-06-13",away:"SSG",home:"삼성",stad:"대구 삼성라이온즈파크",time:"14:00"},
-  {date:"2026-06-14",away:"롯데",home:"LG",stad:"잠실",time:"14:00"},
-  {date:"2026-06-14",away:"한화",home:"키움",stad:"고척 스카이돔",time:"14:00"},
-  {date:"2026-06-14",away:"NC",home:"KT",stad:"수원 KT위즈파크",time:"14:00"},
-  {date:"2026-06-14",away:"SSG",home:"삼성",stad:"대구 삼성라이온즈파크",time:"14:00"},
-  {date:"2026-06-16",away:"KT",home:"두산",stad:"잠실",time:"18:30"},
-  {date:"2026-06-16",away:"롯데",home:"SSG",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-06-16",away:"키움",home:"삼성",stad:"대구 삼성라이온즈파크",time:"18:30"},
-  {date:"2026-06-16",away:"한화",home:"NC",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-06-17",away:"KT",home:"두산",stad:"잠실",time:"18:30"},
-  {date:"2026-06-17",away:"롯데",home:"SSG",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-06-17",away:"키움",home:"삼성",stad:"대구 삼성라이온즈파크",time:"18:30"},
-  {date:"2026-06-17",away:"한화",home:"NC",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-06-18",away:"KT",home:"두산",stad:"잠실",time:"18:30"},
-  {date:"2026-06-18",away:"롯데",home:"SSG",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-06-18",away:"키움",home:"삼성",stad:"대구 삼성라이온즈파크",time:"18:30"},
-  {date:"2026-06-18",away:"한화",home:"NC",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-06-19",away:"두산",home:"LG",stad:"잠실",time:"18:30"},
-  {date:"2026-06-19",away:"롯데",home:"키움",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-06-19",away:"SSG",home:"NC",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-06-20",away:"두산",home:"LG",stad:"잠실",time:"14:00"},
-  {date:"2026-06-20",away:"롯데",home:"키움",stad:"고척 스카이돔",time:"14:00"},
-  {date:"2026-06-20",away:"SSG",home:"NC",stad:"창원 NC파크",time:"14:00"},
-  {date:"2026-06-21",away:"두산",home:"LG",stad:"잠실",time:"14:00"},
-  {date:"2026-06-21",away:"롯데",home:"키움",stad:"고척 스카이돔",time:"14:00"},
-  {date:"2026-06-21",away:"SSG",home:"NC",stad:"창원 NC파크",time:"14:00"},
-  {date:"2026-06-23",away:"삼성",home:"LG",stad:"잠실",time:"18:30"},
-  {date:"2026-06-23",away:"SSG",home:"KT",stad:"수원 KT위즈파크",time:"18:30"},
-  {date:"2026-06-23",away:"두산",home:"한화",stad:"대전 한화생명볼파크",time:"18:30"},
-  {date:"2026-06-23",away:"NC",home:"롯데",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-06-24",away:"삼성",home:"LG",stad:"잠실",time:"18:30"},
-  {date:"2026-06-24",away:"SSG",home:"KT",stad:"수원 KT위즈파크",time:"18:30"},
-  {date:"2026-06-24",away:"두산",home:"한화",stad:"대전 한화생명볼파크",time:"18:30"},
-  {date:"2026-06-24",away:"NC",home:"롯데",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-06-25",away:"삼성",home:"LG",stad:"잠실",time:"18:30"},
-  {date:"2026-06-25",away:"SSG",home:"KT",stad:"수원 KT위즈파크",time:"18:30"},
-  {date:"2026-06-25",away:"두산",home:"한화",stad:"대전 한화생명볼파크",time:"18:30"},
-  {date:"2026-06-25",away:"NC",home:"롯데",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-06-26",away:"한화",home:"SSG",stad:"대전 한화생명볼파크",time:"18:30"},
-  {date:"2026-06-26",away:"KT",home:"삼성",stad:"대구 삼성라이온즈파크",time:"18:30"},
-  {date:"2026-06-26",away:"LG",home:"롯데",stad:"광주 챔피언스필드",time:"18:30"},
-  {date:"2026-06-26",away:"키움",home:"NC",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-06-27",away:"한화",home:"SSG",stad:"대전 한화생명볼파크",time:"14:00"},
-  {date:"2026-06-27",away:"KT",home:"삼성",stad:"대구 삼성라이온즈파크",time:"14:00"},
-  {date:"2026-06-27",away:"LG",home:"롯데",stad:"광주 챔피언스필드",time:"14:00"},
-  {date:"2026-06-27",away:"키움",home:"NC",stad:"창원 NC파크",time:"14:00"},
-  {date:"2026-06-28",away:"한화",home:"SSG",stad:"대전 한화생명볼파크",time:"14:00"},
-  {date:"2026-06-28",away:"KT",home:"삼성",stad:"대구 삼성라이온즈파크",time:"14:00"},
-  {date:"2026-06-28",away:"LG",home:"롯데",stad:"광주 챔피언스필드",time:"14:00"},
-  {date:"2026-06-28",away:"키움",home:"NC",stad:"창원 NC파크",time:"14:00"},
-  {date:"2026-06-30",away:"롯데",home:"두산",stad:"잠실",time:"18:30"},
-  {date:"2026-06-30",away:"LG",home:"키움",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-06-30",away:"KT",home:"한화",stad:"대전 한화생명볼파크",time:"18:30"},
-  {date:"2026-06-30",away:"삼성",home:"NC",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-07-01",away:"롯데",home:"두산",stad:"잠실",time:"18:30"},
-  {date:"2026-07-01",away:"LG",home:"키움",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-07-01",away:"KT",home:"한화",stad:"대전 한화생명볼파크",time:"18:30"},
-  {date:"2026-07-01",away:"삼성",home:"NC",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-07-02",away:"롯데",home:"두산",stad:"잠실",time:"18:30"},
-  {date:"2026-07-02",away:"LG",home:"키움",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-07-02",away:"KT",home:"한화",stad:"대전 한화생명볼파크",time:"18:30"},
-  {date:"2026-07-02",away:"삼성",home:"NC",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-07-03",away:"한화",home:"LG",stad:"잠실",time:"18:30"},
-  {date:"2026-07-03",away:"두산",home:"키움",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-07-03",away:"삼성",home:"SSG",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-07-03",away:"롯데",home:"KT",stad:"수원 KT위즈파크",time:"18:30"},
-  {date:"2026-07-04",away:"한화",home:"LG",stad:"잠실",time:"19:00"},
-  {date:"2026-07-04",away:"두산",home:"키움",stad:"고척 스카이돔",time:"19:00"},
-  {date:"2026-07-04",away:"삼성",home:"SSG",stad:"인천 SSG랜더스필드",time:"19:00"},
-  {date:"2026-07-04",away:"롯데",home:"KT",stad:"수원 KT위즈파크",time:"19:00"},
-  {date:"2026-07-05",away:"한화",home:"LG",stad:"잠실",time:"17:00"},
-  {date:"2026-07-05",away:"두산",home:"키움",stad:"고척 스카이돔",time:"17:00"},
-  {date:"2026-07-05",away:"삼성",home:"SSG",stad:"인천 SSG랜더스필드",time:"17:00"},
-  {date:"2026-07-05",away:"롯데",home:"KT",stad:"수원 KT위즈파크",time:"17:00"},
-  {date:"2026-07-07",away:"SSG",home:"두산",stad:"잠실",time:"18:30"},
-  {date:"2026-07-07",away:"키움",home:"KT",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-07-07",away:"NC",home:"한화",stad:"수원 KT위즈파크",time:"18:30"},
-  {date:"2026-07-07",away:"LG",home:"삼성",stad:"대구 삼성라이온즈파크",time:"18:30"},
-  {date:"2026-07-08",away:"SSG",home:"두산",stad:"잠실",time:"18:30"},
-  {date:"2026-07-08",away:"키움",home:"KT",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-07-08",away:"NC",home:"한화",stad:"수원 KT위즈파크",time:"18:30"},
-  {date:"2026-07-08",away:"LG",home:"삼성",stad:"대구 삼성라이온즈파크",time:"18:30"},
-  {date:"2026-07-09",away:"SSG",home:"두산",stad:"잠실",time:"18:30"},
-  {date:"2026-07-09",away:"키움",home:"KT",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-07-09",away:"NC",home:"한화",stad:"수원 KT위즈파크",time:"18:30"},
-  {date:"2026-07-09",away:"LG",home:"삼성",stad:"대구 삼성라이온즈파크",time:"18:30"},
-  {date:"2026-07-16",away:"KT",home:"LG",stad:"잠실",time:"18:30"},
-  {date:"2026-07-16",away:"키움",home:"한화",stad:"대전 한화생명볼파크",time:"18:30"},
-  {date:"2026-07-16",away:"롯데",home:"삼성",stad:"대구 삼성라이온즈파크",time:"18:30"},
-  {date:"2026-07-16",away:"두산",home:"NC",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-07-17",away:"KT",home:"LG",stad:"잠실",time:"18:30"},
-  {date:"2026-07-17",away:"키움",home:"한화",stad:"대전 한화생명볼파크",time:"18:30"},
-  {date:"2026-07-17",away:"롯데",home:"삼성",stad:"대구 삼성라이온즈파크",time:"18:30"},
-  {date:"2026-07-17",away:"두산",home:"NC",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-07-18",away:"KT",home:"LG",stad:"잠실",time:"19:00"},
-  {date:"2026-07-18",away:"키움",home:"한화",stad:"대전 한화생명볼파크",time:"19:00"},
-  {date:"2026-07-18",away:"롯데",home:"삼성",stad:"대구 삼성라이온즈파크",time:"19:00"},
-  {date:"2026-07-18",away:"두산",home:"NC",stad:"창원 NC파크",time:"19:00"},
-  {date:"2026-07-19",away:"KT",home:"LG",stad:"잠실",time:"17:00"},
-  {date:"2026-07-19",away:"키움",home:"한화",stad:"대전 한화생명볼파크",time:"17:00"},
-  {date:"2026-07-19",away:"롯데",home:"삼성",stad:"대구 삼성라이온즈파크",time:"17:00"},
-  {date:"2026-07-19",away:"두산",home:"NC",stad:"창원 NC파크",time:"17:00"},
-  {date:"2026-07-21",away:"NC",home:"LG",stad:"잠실",time:"18:30"},
-  {date:"2026-07-21",away:"삼성",home:"키움",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-07-21",away:"두산",home:"KT",stad:"수원 KT위즈파크",time:"18:30"},
-  {date:"2026-07-21",away:"SSG",home:"롯데",stad:"사직",time:"18:30"},
-  {date:"2026-07-22",away:"NC",home:"LG",stad:"잠실",time:"18:30"},
-  {date:"2026-07-22",away:"삼성",home:"키움",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-07-22",away:"두산",home:"KT",stad:"수원 KT위즈파크",time:"18:30"},
-  {date:"2026-07-22",away:"SSG",home:"롯데",stad:"사직",time:"18:30"},
-  {date:"2026-07-23",away:"NC",home:"LG",stad:"잠실",time:"18:30"},
-  {date:"2026-07-23",away:"삼성",home:"키움",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-07-23",away:"두산",home:"KT",stad:"수원 KT위즈파크",time:"18:30"},
-  {date:"2026-07-23",away:"SSG",home:"롯데",stad:"사직",time:"18:30"},
-  {date:"2026-07-24",away:"삼성",home:"두산",stad:"잠실",time:"18:30"},
-  {date:"2026-07-24",away:"NC",home:"SSG",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-07-24",away:"LG",home:"한화",stad:"수원 KT위즈파크",time:"18:30"},
-  {date:"2026-07-24",away:"KT",home:"롯데",stad:"사직",time:"18:30"},
-  {date:"2026-07-25",away:"삼성",home:"두산",stad:"잠실",time:"19:00"},
-  {date:"2026-07-25",away:"NC",home:"SSG",stad:"인천 SSG랜더스필드",time:"19:00"},
-  {date:"2026-07-25",away:"LG",home:"한화",stad:"수원 KT위즈파크",time:"19:00"},
-  {date:"2026-07-25",away:"KT",home:"롯데",stad:"사직",time:"19:00"},
-  {date:"2026-07-26",away:"삼성",home:"두산",stad:"잠실",time:"17:00"},
-  {date:"2026-07-26",away:"NC",home:"SSG",stad:"인천 SSG랜더스필드",time:"17:00"},
-  {date:"2026-07-26",away:"LG",home:"한화",stad:"수원 KT위즈파크",time:"17:00"},
-  {date:"2026-07-26",away:"KT",home:"롯데",stad:"사직",time:"17:00"},
-  {date:"2026-07-28",away:"키움",home:"LG",stad:"잠실",time:"18:30"},
-  {date:"2026-07-28",away:"두산",home:"SSG",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-07-28",away:"롯데",home:"한화",stad:"대전 한화생명볼파크",time:"18:30"},
-  {date:"2026-07-28",away:"KT",home:"NC",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-07-29",away:"키움",home:"LG",stad:"잠실",time:"18:30"},
-  {date:"2026-07-29",away:"두산",home:"SSG",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-07-29",away:"롯데",home:"한화",stad:"대전 한화생명볼파크",time:"18:30"},
-  {date:"2026-07-29",away:"KT",home:"NC",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-07-30",away:"키움",home:"LG",stad:"잠실",time:"18:30"},
-  {date:"2026-07-30",away:"두산",home:"SSG",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-07-30",away:"롯데",home:"한화",stad:"대전 한화생명볼파크",time:"18:30"},
-  {date:"2026-07-30",away:"KT",home:"NC",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-07-31",away:"LG",home:"두산",stad:"잠실",time:"18:30"},
-  {date:"2026-07-31",away:"SSG",home:"키움",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-07-31",away:"한화",home:"KT",stad:"대전 한화생명볼파크",time:"18:30"},
-  {date:"2026-07-31",away:"NC",home:"롯데",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-08-01",away:"LG",home:"두산",stad:"잠실",time:"19:00"},
-  {date:"2026-08-01",away:"SSG",home:"키움",stad:"고척 스카이돔",time:"19:00"},
-  {date:"2026-08-01",away:"한화",home:"KT",stad:"대전 한화생명볼파크",time:"19:00"},
-  {date:"2026-08-01",away:"NC",home:"롯데",stad:"창원 NC파크",time:"19:00"},
-  {date:"2026-08-02",away:"LG",home:"두산",stad:"잠실",time:"17:00"},
-  {date:"2026-08-02",away:"SSG",home:"키움",stad:"고척 스카이돔",time:"17:00"},
-  {date:"2026-08-02",away:"한화",home:"KT",stad:"대전 한화생명볼파크",time:"17:00"},
-  {date:"2026-08-02",away:"NC",home:"롯데",stad:"창원 NC파크",time:"17:00"},
-  {date:"2026-08-04",away:"NC",home:"두산",stad:"잠실",time:"18:30"},
-  {date:"2026-08-04",away:"LG",home:"SSG",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-08-04",away:"한화",home:"삼성",stad:"대전 한화생명볼파크",time:"18:30"},
-  {date:"2026-08-04",away:"키움",home:"롯데",stad:"사직",time:"18:30"},
-  {date:"2026-08-05",away:"NC",home:"두산",stad:"잠실",time:"18:30"},
-  {date:"2026-08-05",away:"LG",home:"SSG",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-08-05",away:"한화",home:"삼성",stad:"대전 한화생명볼파크",time:"18:30"},
-  {date:"2026-08-05",away:"키움",home:"롯데",stad:"사직",time:"18:30"},
-  {date:"2026-08-06",away:"NC",home:"두산",stad:"잠실",time:"18:30"},
-  {date:"2026-08-06",away:"LG",home:"SSG",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-08-06",away:"한화",home:"삼성",stad:"대전 한화생명볼파크",time:"18:30"},
-  {date:"2026-08-06",away:"키움",home:"롯데",stad:"사직",time:"18:30"},
-  {date:"2026-08-07",away:"롯데",home:"KT",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-08-07",away:"키움",home:"한화",stad:"대전 한화생명볼파크",time:"18:30"},
-  {date:"2026-08-07",away:"두산",home:"삼성",stad:"대구 삼성라이온즈파크",time:"18:30"},
-  {date:"2026-08-07",away:"SSG",home:"NC",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-08-08",away:"롯데",home:"KT",stad:"인천 SSG랜더스필드",time:"19:00"},
-  {date:"2026-08-08",away:"키움",home:"한화",stad:"대전 한화생명볼파크",time:"19:00"},
-  {date:"2026-08-08",away:"두산",home:"삼성",stad:"대구 삼성라이온즈파크",time:"19:00"},
-  {date:"2026-08-08",away:"SSG",home:"NC",stad:"창원 NC파크",time:"19:00"},
-  {date:"2026-08-09",away:"롯데",home:"KT",stad:"인천 SSG랜더스필드",time:"17:00"},
-  {date:"2026-08-09",away:"키움",home:"한화",stad:"대전 한화생명볼파크",time:"17:00"},
-  {date:"2026-08-09",away:"두산",home:"삼성",stad:"대구 삼성라이온즈파크",time:"17:00"},
-  {date:"2026-08-09",away:"SSG",home:"NC",stad:"창원 NC파크",time:"17:00"},
-  {date:"2026-08-11",away:"한화",home:"두산",stad:"잠실",time:"18:30"},
-  {date:"2026-08-11",away:"LG",home:"키움",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-08-11",away:"롯데",home:"SSG",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-08-11",away:"KT",home:"NC",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-08-12",away:"한화",home:"두산",stad:"잠실",time:"18:30"},
-  {date:"2026-08-12",away:"LG",home:"키움",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-08-12",away:"롯데",home:"SSG",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-08-12",away:"KT",home:"NC",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-08-13",away:"한화",home:"두산",stad:"잠실",time:"18:30"},
-  {date:"2026-08-13",away:"LG",home:"키움",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-08-13",away:"롯데",home:"SSG",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-08-13",away:"KT",home:"NC",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-08-14",away:"SSG",home:"LG",stad:"잠실",time:"18:30"},
-  {date:"2026-08-14",away:"키움",home:"KT",stad:"고척 스카이돔",time:"18:30"},
-  {date:"2026-08-14",away:"한화",home:"삼성",stad:"대전 한화생명볼파크",time:"18:30"},
-  {date:"2026-08-14",away:"NC",home:"롯데",stad:"창원 NC파크",time:"18:30"},
-  {date:"2026-08-15",away:"SSG",home:"LG",stad:"잠실",time:"19:00"},
-  {date:"2026-08-15",away:"키움",home:"KT",stad:"고척 스카이돔",time:"19:00"},
-  {date:"2026-08-15",away:"한화",home:"삼성",stad:"대전 한화생명볼파크",time:"19:00"},
-  {date:"2026-08-15",away:"NC",home:"롯데",stad:"창원 NC파크",time:"19:00"},
-  {date:"2026-08-16",away:"SSG",home:"LG",stad:"잠실",time:"17:00"},
-  {date:"2026-08-16",away:"키움",home:"KT",stad:"고척 스카이돔",time:"17:00"},
-  {date:"2026-08-16",away:"한화",home:"삼성",stad:"대전 한화생명볼파크",time:"17:00"},
-  {date:"2026-08-16",away:"NC",home:"롯데",stad:"창원 NC파크",time:"17:00"},
-  {date:"2026-08-18",away:"KT",home:"LG",stad:"잠실",time:"18:30"},
-  {date:"2026-08-18",away:"삼성",home:"SSG",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-08-18",away:"NC",home:"한화",stad:"대전 한화생명볼파크",time:"18:30"},
-  {date:"2026-08-18",away:"두산",home:"롯데",stad:"사직",time:"18:30"},
-  {date:"2026-08-19",away:"KT",home:"LG",stad:"잠실",time:"18:30"},
-  {date:"2026-08-19",away:"삼성",home:"SSG",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-08-19",away:"NC",home:"한화",stad:"대전 한화생명볼파크",time:"18:30"},
-  {date:"2026-08-19",away:"두산",home:"롯데",stad:"사직",time:"18:30"},
-  {date:"2026-08-20",away:"KT",home:"LG",stad:"잠실",time:"18:30"},
-  {date:"2026-08-20",away:"삼성",home:"SSG",stad:"인천 SSG랜더스필드",time:"18:30"},
-  {date:"2026-08-20",away:"NC",home:"한화",stad:"대전 한화생명볼파크",time:"18:30"},
-  {date:"2026-08-20",away:"두산",home:"롯데",stad:"사직",time:"18:30"},
-];
-
 const STAND = [
-  {r:1,s:"LG",name:"LG 트윈스",c:"#C30452",note:"2025 우승"},
-  {r:2,s:"한화",name:"한화 이글스",c:"#FF6600",note:"2025 준우승"},
-  {r:3,s:"SSG",name:"SSG 랜더스",c:"#CE0E2D",note:""},
-  {r:4,s:"삼성",name:"삼성 라이온즈",c:"#1E4489",note:""},
-  {r:5,s:"NC",name:"NC 다이노스",c:"#071D3B",note:""},
-  {r:6,s:"KT",name:"KT 위즈",c:"#444",note:""},
-  {r:7,s:"롯데",name:"롯데 자이언츠",c:"#002561",note:""},
-  {r:8,s:"KIA",name:"KIA 타이거즈",c:"#E31837",note:"2025 8위"},
-  {r:9,s:"두산",name:"두산 베어스",c:"#1B2A6B",note:""},
-  {r:10,s:"키움",name:"키움 히어로즈",c:"#570514",note:""},
+  {r:1,s:"LG",   name:"LG 트윈스",    c:"#C30452", note:"2025 우승"},
+  {r:2,s:"한화",  name:"한화 이글스",   c:"#FF6600", note:"2025 준우승"},
+  {r:3,s:"SSG",  name:"SSG 랜더스",    c:"#CE0E2D", note:""},
+  {r:4,s:"삼성",  name:"삼성 라이온즈", c:"#1E4489", note:""},
+  {r:5,s:"NC",   name:"NC 다이노스",   c:"#071D3B", note:""},
+  {r:6,s:"KT",   name:"KT 위즈",       c:"#444",    note:""},
+  {r:7,s:"롯데",  name:"롯데 자이언츠", c:"#002561", note:""},
+  {r:8,s:"KIA",  name:"KIA 타이거즈",  c:"#E31837", note:"2025 8위"},
+  {r:9,s:"두산",  name:"두산 베어스",   c:"#1B2A6B", note:""},
+  {r:10,s:"키움", name:"키움 히어로즈", c:"#570514", note:""},
 ];
 
 const LEAD = {
@@ -738,10 +211,10 @@ function Diamond({players, color, dark}) {
         <line x1="170" y1="225" x2="30" y2="90" stroke={dark?"rgba(255,255,255,0.08)":"rgba(0,0,0,0.1)"} strokeWidth="1" strokeDasharray="4,4"/>
         <line x1="170" y1="225" x2="310" y2="90" stroke={dark?"rgba(255,255,255,0.08)":"rgba(0,0,0,0.1)"} strokeWidth="1" strokeDasharray="4,4"/>
       </svg>
-      {players.map(p=>{
+      {players.map((p,idx)=>{
         const pos=PC[p.p]||PC.DH; const isP=p.p==="P";
         return (
-          <div key={p.n} style={{position:"absolute",left:`${pos.x}%`,top:`${pos.y}%`,transform:"translate(-50%,-50%)",zIndex:2}}>
+          <div key={idx} style={{position:"absolute",left:`${pos.x}%`,top:`${pos.y}%`,transform:"translate(-50%,-50%)",zIndex:2}}>
             <div style={{background:isP?`linear-gradient(135deg,${color},${color}bb)`:"rgba(12,18,32,0.93)",
               border:`1.5px solid ${isP?color:"rgba(255,255,255,0.18)"}`,borderRadius:"8px",padding:"3px 7px",
               display:"flex",alignItems:"center",gap:"4px",whiteSpace:"nowrap",
@@ -760,19 +233,19 @@ function Diamond({players, color, dark}) {
 function Modal({game, onClose, closeRef, dark, D}) {
   const [lt, setLt] = useState("away");
   const [closing, setClosing] = useState(false);
-  const [memo, setMemo] = useState(()=>localStorage.getItem(`memo_${game.date}_${game.away}_${game.home}`) || "");
+  const [memo, setMemo] = useState(() => localStorage.getItem(`memo_${game.date}_${game.away}_${game.home}`) || "");
   const [memoSaved, setMemoSaved] = useState(false);
-  const touchStartY = React.useRef(null);
+  const touchStartY = useRef(null);
 
   const handleClose = () => {
     setClosing(true);
-    document.body.style.overflow = '';
+    document.body.style.overflow = "";
     setTimeout(() => onClose(), 280);
   };
 
   useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = ''; };
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
   }, []);
 
   useEffect(() => {
@@ -783,8 +256,7 @@ function Modal({game, onClose, closeRef, dark, D}) {
   const onTouchStart = e => { touchStartY.current = e.touches[0].clientY; };
   const onTouchMove = e => {
     if (touchStartY.current === null) return;
-    const dy = e.touches[0].clientY - touchStartY.current;
-    if (dy > 0) e.preventDefault();
+    if (e.touches[0].clientY - touchStartY.current > 0) e.preventDefault();
   };
   const onTouchEnd = e => {
     if (touchStartY.current === null) return;
@@ -793,7 +265,7 @@ function Modal({game, onClose, closeRef, dark, D}) {
     if (dy > 60) handleClose();
   };
 
-  const saveMemo = (val) => {
+  const saveMemo = val => {
     setMemo(val);
     localStorage.setItem(`memo_${game.date}_${game.away}_${game.home}`, val);
     setMemoSaved(true);
@@ -813,19 +285,27 @@ function Modal({game, onClose, closeRef, dark, D}) {
   const ht = hs.reduce((a,b) => a + (b > 0 ? b : 0), 0);
 
   return (
-    <div style={{position:"fixed",inset:0,zIndex:100,background:dark?"rgba(0,0,0,0.8)":"rgba(0,0,0,0.4)",backdropFilter:"blur(6px)",
-      display:"flex",alignItems:"flex-end",justifyContent:"center",animation:"fadeIn 0.2s"}} onClick={handleClose}>
-      <div style={{width:"100%",maxWidth:"520px",background:dark?"#0F1525":"#ffffff",border:"1px solid rgba(255,255,255,0.1)",
-        borderRadius:"22px 22px 0 0",maxHeight:"92vh",overflowY:"auto",
-        animation:closing?"slideDown 0.28s ease forwards":"slideUp 0.3s ease",paddingBottom:"28px"}}
-        onClick={e=>e.stopPropagation()}
+    <div
+      style={{position:"fixed",inset:0,zIndex:100,
+        background:dark?"rgba(0,0,0,0.8)":"rgba(0,0,0,0.4)",
+        backdropFilter:"blur(6px)",display:"flex",alignItems:"flex-end",
+        justifyContent:"center",animation:"fadeIn 0.2s"}}
+      onClick={handleClose}
+    >
+      <div
+        style={{width:"100%",maxWidth:"520px",
+          background:dark?"#0F1525":"#ffffff",
+          borderRadius:"22px 22px 0 0",maxHeight:"92vh",overflowY:"auto",
+          animation:closing?"slideDown 0.28s ease forwards":"slideUp 0.3s ease",
+          paddingBottom:"28px"}}
+        onClick={e => e.stopPropagation()}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}>
-
+        onTouchEnd={onTouchEnd}
+      >
         {/* 핸들 */}
         <div style={{display:"flex",justifyContent:"center",padding:"10px 0 2px"}}>
-          <div style={{width:"34px",height:"4px",borderRadius:"2px",background:dark?"rgba(255,255,255,0.15)":"rgba(0,0,0,0.25)"}}/>
+          <div style={{width:"34px",height:"4px",borderRadius:"2px",background:dark?"rgba(255,255,255,0.15)":"rgba(0,0,0,0.2)"}}/>
         </div>
 
         {/* 헤더 */}
@@ -834,84 +314,89 @@ function Modal({game, onClose, closeRef, dark, D}) {
             <span style={{fontSize:"11px",fontWeight:"700",color:"#FFB300",fontFamily:"'Noto Sans KR',sans-serif"}}>
               {game.time} 시작 · 📍 {game.stad}
             </span>
-            <button onClick={handleClose} style={{background:dark?"rgba(255,255,255,0.08)":"rgba(0,0,0,0.06)",border:"none",
-              color:dark?"rgba(255,255,255,0.6)":"rgba(0,0,0,0.5)",borderRadius:"50%",width:"28px",height:"28px",
-              fontSize:"16px",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+            <button onClick={handleClose} style={{
+              background:dark?"rgba(255,255,255,0.08)":"rgba(0,0,0,0.06)",
+              color:dark?"rgba(255,255,255,0.6)":"rgba(0,0,0,0.5)",
+              borderRadius:"50%",width:"28px",height:"28px",fontSize:"16px",
+              display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
           </div>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            {/* 원정팀 */}
             <div style={{display:"flex",alignItems:"center",gap:"9px",flex:1}}>
               <div style={{width:"48px",height:"48px",display:"flex",alignItems:"center",justifyContent:"center"}}>
                 {aw.img ? <img src={aw.img} style={{width:"100%",height:"100%",objectFit:"contain"}}/> : <span style={{fontSize:"22px"}}>{aw.emoji}</span>}
               </div>
               <div>
-                <div style={{fontSize:"13px",fontWeight:"800",fontFamily:"'Noto Sans KR',sans-serif",color:game.away==="KIA"?"#ff6b6b":dark?"#fff":D.text}}>{aw.name}</div>
-                <div style={{fontSize:"10px",color:dark?"rgba(255,255,255,0.3)":"rgba(0,0,0,0.45)",fontFamily:"'Noto Sans KR',sans-serif"}}>AWAY</div>
+                <div style={{fontSize:"13px",fontWeight:"800",fontFamily:"'Noto Sans KR',sans-serif",color:game.away==="KIA"?"#ff6b6b":D.text}}>{aw.name}</div>
+                <div style={{fontSize:"10px",color:D.textSub,fontFamily:"'Noto Sans KR',sans-serif"}}>AWAY</div>
               </div>
             </div>
+            {/* 스코어 */}
             <div style={{textAlign:"center",padding:"0 8px"}}>
               {isSch
                 ? <div style={{fontSize:"16px",fontWeight:"800",color:"#FFB300"}}>VS</div>
                 : <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
                     <span style={{fontSize:"28px",fontWeight:"900",color:D.text}}>{game.awayScore ?? 0}</span>
-                    <span style={{color:"rgba(255,255,255,0.2)"}}>:</span>
+                    <span style={{color:D.textSub}}>:</span>
                     <span style={{fontSize:"28px",fontWeight:"900",color:D.text}}>{game.homeScore ?? 0}</span>
                   </div>
               }
             </div>
+            {/* 홈팀 */}
             <div style={{display:"flex",alignItems:"center",gap:"9px",flex:1,flexDirection:"row-reverse"}}>
               <div style={{width:"48px",height:"48px",display:"flex",alignItems:"center",justifyContent:"center"}}>
                 {hw.img ? <img src={hw.img} style={{width:"100%",height:"100%",objectFit:"contain"}}/> : <span style={{fontSize:"22px"}}>{hw.emoji}</span>}
               </div>
               <div style={{textAlign:"right"}}>
-                <div style={{fontSize:"13px",fontWeight:"800",fontFamily:"'Noto Sans KR',sans-serif",color:game.home==="KIA"?"#ff6b6b":dark?"#fff":D.text}}>{hw.name}</div>
-                <div style={{fontSize:"10px",color:dark?"rgba(255,255,255,0.3)":"rgba(0,0,0,0.45)",fontFamily:"'Noto Sans KR',sans-serif"}}>HOME</div>
+                <div style={{fontSize:"13px",fontWeight:"800",fontFamily:"'Noto Sans KR',sans-serif",color:game.home==="KIA"?"#ff6b6b":D.text}}>{hw.name}</div>
+                <div style={{fontSize:"10px",color:D.textSub,fontFamily:"'Noto Sans KR',sans-serif"}}>HOME</div>
               </div>
             </div>
           </div>
         </div>
 
         {/* 본문 */}
-        <div style={{padding:"18px 18px 0"}}>
+        <div style={{padding:"18px"}}>
 
-          {/* 이닝별 스코어 */}
+          {/* 이닝 스코어 */}
           <div style={{marginBottom:"18px"}}>
             <div style={{display:"flex",alignItems:"center",gap:"6px",marginBottom:"10px"}}>
               <span style={{fontSize:"15px"}}>📊</span>
               <span style={{fontSize:"13px",fontWeight:"800",fontFamily:"'Noto Sans KR',sans-serif"}}>이닝별 스코어</span>
             </div>
-            <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:"12px",padding:"4px"}}>
+            <div style={{background:dark?"rgba(255,255,255,0.03)":"rgba(0,0,0,0.03)",border:`1px solid ${dark?"rgba(255,255,255,0.08)":"rgba(0,0,0,0.08)"}`,borderRadius:"12px",padding:"4px"}}>
               {isSch
-                ? <div style={{textAlign:"center",padding:"16px",color:dark?"rgba(255,255,255,0.25)":"rgba(0,0,0,0.4)",fontSize:"12px",fontFamily:"'Noto Sans KR',sans-serif"}}>
+                ? <div style={{textAlign:"center",padding:"16px",color:D.textSub,fontSize:"12px",fontFamily:"'Noto Sans KR',sans-serif"}}>
                     경기 예정 · 경기 후 스코어가 표시됩니다
                   </div>
                 : <div style={{overflowX:"auto"}}>
                     <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px",minWidth:"300px"}}>
                       <thead>
                         <tr>
-                          <td style={{padding:"6px",color:dark?"rgba(255,255,255,0.3)":"rgba(0,0,0,0.45)",width:"55px"}}></td>
+                          <td style={{padding:"6px",color:D.textSub,width:"55px"}}></td>
                           {[1,2,3,4,5,6,7,8,9].map(i=>(
-                            <td key={i} style={{textAlign:"center",padding:"6px 3px",color:"rgba(255,255,255,0.4)",fontWeight:"700"}}>{i}</td>
+                            <td key={i} style={{textAlign:"center",padding:"6px 3px",color:D.textSub,fontWeight:"700"}}>{i}</td>
                           ))}
-                          <td style={{textAlign:"center",padding:"6px 5px",color:dark?"rgba(255,255,255,0.6)":"rgba(0,0,0,0.7)",fontWeight:"900",fontSize:"13px"}}>R</td>
+                          <td style={{textAlign:"center",padding:"6px 5px",color:D.text,fontWeight:"900",fontSize:"13px"}}>R</td>
                         </tr>
                       </thead>
                       <tbody>
-                        {[[game.away, as, at, aw.color],[game.home, hs, ht, hw.color]].map(([nm,sc,tot,cl],ri)=>(
-                          <tr key={ri} style={{background:ri===0?"rgba(255,255,255,0.03)":"transparent"}}>
-                            <td style={{padding:"8px 6px",fontFamily:"'Noto Sans KR',sans-serif",fontSize:"11px",fontWeight:"700",color:"rgba(255,255,255,0.7)",borderTop:"1px solid rgba(255,255,255,0.07)"}}>
+                        {[[game.away,as,at,aw.color],[game.home,hs,ht,hw.color]].map(([nm,sc,tot,cl],ri)=>(
+                          <tr key={ri}>
+                            <td style={{padding:"8px 6px",fontSize:"11px",fontWeight:"700",color:D.textSub,borderTop:`1px solid ${dark?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.07)"}`}}>
                               <div style={{display:"flex",alignItems:"center",gap:"4px"}}>
                                 <div style={{width:"5px",height:"5px",borderRadius:"50%",background:cl}}/>
                                 {nm}
                               </div>
                             </td>
                             {sc.map((s,i)=>(
-                              <td key={i} style={{textAlign:"center",padding:"8px 3px",color:s>0?"#fff":dark?"rgba(255,255,255,0.22)":"rgba(0,0,0,0.35)",fontWeight:s>0?"700":"400",borderTop:"1px solid rgba(255,255,255,0.07)"}}>
-                                {s===-1 ? <span style={{color:dark?"rgba(255,255,255,0.1)":"rgba(0,0,0,0.08)"}}>-</span> : s}
+                              <td key={i} style={{textAlign:"center",padding:"8px 3px",color:s>0?D.text:D.textMuted,fontWeight:s>0?"700":"400",borderTop:`1px solid ${dark?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.07)"}`}}>
+                                {s===-1 ? <span style={{color:D.textMuted}}>-</span> : s}
                               </td>
                             ))}
                             <td style={{textAlign:"center",padding:"8px 5px",fontWeight:"900",fontSize:"14px",
-                              color:tot===Math.max(at,ht)&&at!==ht?cl:dark?"rgba(255,255,255,0.85)":"rgba(0,0,0,0.85)",
-                              borderTop:"1px solid rgba(255,255,255,0.07)"}}>{tot}</td>
+                              color:tot===Math.max(at,ht)&&at!==ht?cl:D.text,
+                              borderTop:`1px solid ${dark?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.07)"}`}}>{tot}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -932,8 +417,9 @@ function Modal({game, onClose, closeRef, dark, D}) {
                 <div style={{display:"flex",gap:"4px"}}>
                   {[{id:"away",label:game.away,info:aw},{id:"home",label:game.home,info:hw}].map(({id,label,info})=>(
                     <button key={id} onClick={()=>setLt(id)} style={{
-                      padding:"4px 10px",background:lt===id?info.color:dark?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.06)",
-                      border:"none",borderRadius:"8px",color:"#fff",fontSize:"11px",fontWeight:"700",
+                      padding:"4px 10px",
+                      background:lt===id?info.color:dark?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.06)",
+                      borderRadius:"8px",color:"#fff",fontSize:"11px",fontWeight:"700",
                       fontFamily:"'Noto Sans KR',sans-serif",transition:"all 0.2s"}}>
                       {T[label]?.emoji} {label}
                     </button>
@@ -942,23 +428,25 @@ function Modal({game, onClose, closeRef, dark, D}) {
               )}
             </div>
             {!hasLU
-              ? <div style={{background:D.inputBg,border:`1px solid ${D.cardBorder}`,borderRadius:"14px",padding:"26px 20px",textAlign:"center"}}>
+              ? <div style={{background:dark?"rgba(255,255,255,0.03)":"rgba(0,0,0,0.03)",border:`1px solid ${dark?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.07)"}`,borderRadius:"14px",padding:"26px 20px",textAlign:"center"}}>
                   <div style={{fontSize:"24px",marginBottom:"6px"}}>📋</div>
-                  <div style={{fontSize:"13px",color:dark?"rgba(255,255,255,0.4)":"rgba(0,0,0,0.4)",fontFamily:"'Noto Sans KR',sans-serif"}}>라인업은 경기 당일 발표됩니다</div>
-                  <div style={{fontSize:"11px",color:"rgba(255,255,255,0.2)",marginTop:"4px",fontFamily:"'Noto Sans KR',sans-serif"}}>보통 경기 시작 1시간 전 공개</div>
+                  <div style={{fontSize:"13px",color:D.textSub,fontFamily:"'Noto Sans KR',sans-serif"}}>라인업은 경기 당일 발표됩니다</div>
+                  <div style={{fontSize:"11px",color:D.textMuted,marginTop:"4px",fontFamily:"'Noto Sans KR',sans-serif"}}>보통 경기 시작 1시간 전 공개</div>
                 </div>
-              : <div style={{background:dark?"rgba(255,255,255,0.02)":"rgba(0,0,0,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:"14px",padding:"12px 10px"}}>
+              : <div style={{background:dark?"rgba(255,255,255,0.02)":"rgba(0,0,0,0.02)",border:`1px solid ${dark?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.07)"}`,borderRadius:"14px",padding:"12px 10px"}}>
                   <div style={{textAlign:"center",marginBottom:"4px",fontSize:"12px",fontWeight:"700",color:ct.color,fontFamily:"'Noto Sans KR',sans-serif"}}>
                     {ct.emoji} {ct.name}
                   </div>
                   <Diamond players={cur} color={ct.color} dark={dark}/>
                   <div style={{marginTop:"10px",display:"grid",gridTemplateColumns:"1fr 1fr",gap:"4px"}}>
                     {cur.map((p,i)=>(
-                      <div key={i} style={{display:"flex",alignItems:"center",gap:"6px",padding:"5px 7px",borderRadius:"7px",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.05)"}}>
-                        <span style={{fontSize:"10px",fontWeight:"900",minWidth:"17px",textAlign:"center",color:p.p==="P"?"#fff":ct.color,
-                          background:p.p==="P"?ct.color+"cc":"transparent",borderRadius:"3px",padding:p.p==="P"?"1px 3px":"0"}}>{p.n}</span>
-                        <span style={{fontSize:"12px",fontWeight:"700",color:"#fff",fontFamily:"'Noto Sans KR',sans-serif",flex:1}}>{p.name}</span>
-                        <span style={{fontSize:"10px",color:dark?"rgba(255,255,255,0.35)":"rgba(0,0,0,0.5)"}}>{p.p}</span>
+                      <div key={i} style={{display:"flex",alignItems:"center",gap:"6px",padding:"5px 7px",borderRadius:"7px",background:dark?"rgba(255,255,255,0.03)":"rgba(0,0,0,0.03)",border:`1px solid ${dark?"rgba(255,255,255,0.05)":"rgba(0,0,0,0.05)"}`}}>
+                        <span style={{fontSize:"10px",fontWeight:"900",minWidth:"17px",textAlign:"center",
+                          color:p.p==="P"?"#fff":ct.color,
+                          background:p.p==="P"?ct.color+"cc":"transparent",
+                          borderRadius:"3px",padding:p.p==="P"?"1px 3px":"0"}}>{p.n}</span>
+                        <span style={{fontSize:"12px",fontWeight:"700",color:dark?"#fff":D.text,fontFamily:"'Noto Sans KR',sans-serif",flex:1}}>{p.name}</span>
+                        <span style={{fontSize:"10px",color:D.textSub}}>{p.p}</span>
                       </div>
                     ))}
                   </div>
@@ -967,17 +455,17 @@ function Modal({game, onClose, closeRef, dark, D}) {
           </div>
 
           {/* 메모 */}
-          <div style={{marginBottom:"8px"}}>
+          <div>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"8px"}}>
               <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
                 <span style={{fontSize:"15px"}}>📝</span>
                 <span style={{fontSize:"13px",fontWeight:"800",fontFamily:"'Noto Sans KR',sans-serif"}}>내 메모</span>
               </div>
-              {memoSaved && <span style={{fontSize:"11px",color:"#00C864",fontFamily:"'Noto Sans KR',sans-serif",fontWeight:"700"}}>저장됨 ✓</span>}
+              {memoSaved && <span style={{fontSize:"11px",color:"#00C864",fontWeight:"700",fontFamily:"'Noto Sans KR',sans-serif"}}>저장됨 ✓</span>}
             </div>
             <textarea
               value={memo}
-              onChange={e=>saveMemo(e.target.value)}
+              onChange={e => saveMemo(e.target.value)}
               placeholder="이 경기에 대한 생각이나 메모를 남겨보세요 ✍️"
               style={{
                 width:"100%",minHeight:"90px",padding:"12px",
@@ -985,7 +473,7 @@ function Modal({game, onClose, closeRef, dark, D}) {
                 border:`1px solid ${dark?"rgba(255,255,255,0.1)":"rgba(0,0,0,0.1)"}`,
                 borderRadius:"12px",color:D.text,fontSize:"13px",
                 fontFamily:"'Noto Sans KR',sans-serif",lineHeight:"1.6",
-                resize:"none",outline:"none",
+                resize:"none",
               }}
             />
           </div>
@@ -993,11 +481,8 @@ function Modal({game, onClose, closeRef, dark, D}) {
         </div>
       </div>
     </div>
-  </div>
-  </div>
   );
 }
-
 
 function CalendarTab({onSelect, dark, D}) {
   const [yr,setYr] = useState(2026);
@@ -1008,14 +493,13 @@ function CalendarTab({onSelect, dark, D}) {
   const f = firstDow(yr,mo);
   const WDAYS = ["월","화","수","목","금","토","일"];
 
-  // 달력 셀 - KIA 경기만
   const kbd = {};
   KIA_SCH.forEach(g=>{
     const [gy,gm,gd] = g.date.split("-").map(Number);
     if(gy===yr&&gm===mo) kbd[gd]=g;
   });
-  // 하단 목록 - 전체 경기
-  const selGs = ALL_SCH.filter(g=>g.date===sel);
+
+  const selGs = KIA_SCH.filter(g=>g.date===sel);
   const [,sm,sd] = sel.split("-").map(Number);
   const dw = ["일","월","화","수","목","금","토"][new Date(yr,sm-1,sd).getDay()];
   const cells = [];
@@ -1030,41 +514,40 @@ function CalendarTab({onSelect, dark, D}) {
           display:"flex",alignItems:"center",gap:"10px"}}>
           <span style={{fontSize:"20px"}}>⚾</span>
           <div style={{flex:1}}>
-            <div style={{fontSize:"13px",fontWeight:"900",fontFamily:"'Noto Sans KR',sans-serif"}}>
+            <div style={{fontSize:"13px",fontWeight:"900",fontFamily:"'Noto Sans KR',sans-serif",color:D.text}}>
               2026 KBO 개막까지 <span style={{color:"#E31837"}}>D-2</span>
             </div>
-            <div style={{fontSize:"11px",color:dark?"rgba(255,255,255,0.4)":"rgba(0,0,0,0.55)",fontFamily:"'Noto Sans KR',sans-serif"}}>3/28(토) · 인천 SSG랜더스필드 · 14:00</div>
+            <div style={{fontSize:"11px",color:D.textSub,fontFamily:"'Noto Sans KR',sans-serif"}}>3/28(토) · 인천 SSG랜더스필드 · 14:00</div>
           </div>
           <div style={{textAlign:"right"}}>
             <div style={{fontSize:"11px",color:"#FFB300",fontWeight:"700",fontFamily:"'Noto Sans KR',sans-serif"}}>KIA 원정개막</div>
-            <div style={{fontSize:"11px",color:dark?"rgba(255,255,255,0.3)":"rgba(0,0,0,0.45)",fontFamily:"'Noto Sans KR',sans-serif"}}>🐯 vs 🚀</div>
+            <div style={{fontSize:"11px",color:D.textSub,fontFamily:"'Noto Sans KR',sans-serif"}}>🐯 vs 🚀</div>
           </div>
         </div>
       )}
 
       <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:"16px",marginBottom:"12px"}}>
         <button onClick={()=>mo===1?(setYr(y=>y-1),setMo(12)):setMo(m=>m-1)}
-          style={{background:"none",border:"none",color:"#E31837",fontSize:"22px",padding:"4px 10px",lineHeight:1}}>‹</button>
+          style={{background:"none",color:"#E31837",fontSize:"22px",padding:"4px 10px",lineHeight:1}}>‹</button>
         <h2 style={{fontSize:"17px",fontWeight:"900",fontFamily:"'Noto Sans KR',sans-serif",minWidth:"110px",textAlign:"center",color:D.text}}>{yr}년 {mo}월</h2>
         <button onClick={()=>mo===12?(setYr(y=>y+1),setMo(1)):setMo(m=>m+1)}
-          style={{background:"none",border:"none",color:"#E31837",fontSize:"22px",padding:"4px 10px",lineHeight:1}}>›</button>
+          style={{background:"none",color:"#E31837",fontSize:"22px",padding:"4px 10px",lineHeight:1}}>›</button>
       </div>
 
-      <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:"14px",overflow:"hidden",marginBottom:"16px"}}>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",borderBottom:"1px solid rgba(255,255,255,0.07)"}}>
+      <div style={{background:dark?"rgba(255,255,255,0.03)":"rgba(0,0,0,0.03)",border:`1px solid ${dark?"rgba(255,255,255,0.08)":"rgba(0,0,0,0.08)"}`,borderRadius:"14px",overflow:"hidden",marginBottom:"16px"}}>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",borderBottom:`1px solid ${dark?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.07)"}`}}>
           {WDAYS.map((w,i)=>(
             <div key={w} style={{textAlign:"center",padding:"8px 0",fontSize:"11px",fontWeight:"700",
-              color:i===5?"#4FC3F7":i===6?"#EF5350":dark?"rgba(255,255,255,0.35)":"rgba(0,0,0,0.5)",fontFamily:"'Noto Sans KR',sans-serif"}}>{w}</div>
+              color:i===5?"#4FC3F7":i===6?"#EF5350":D.textSub,fontFamily:"'Noto Sans KR',sans-serif"}}>{w}</div>
           ))}
         </div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)"}}>
           {cells.map((day,idx)=>{
-            if(!day) return <div key={`e${idx}`} style={{minHeight:"62px",borderRight:idx%7!==6?"1px solid rgba(255,255,255,0.04)":"none",borderBottom:"1px solid rgba(255,255,255,0.04)"}}/>;
+            if(!day) return <div key={`e${idx}`} style={{minHeight:"62px"}}/>;
             const ds = `${yr}-${pad(mo)}-${pad(day)}`;
             const kg = kbd[day];
             const isSel = ds===sel;
             const isToday = ds===today;
-            const isOpen = ds==="2026-03-28";
             const dow = (f+day-1)%7;
             const oppKey = kg?(kg.home==="KIA"?kg.away:kg.home):null;
             const isHome = kg&&kg.home==="KIA";
@@ -1072,24 +555,20 @@ function CalendarTab({onSelect, dark, D}) {
             const isPast = new Date(ds)<new Date("2026-03-28");
             return (
               <div key={day} onClick={()=>setSel(ds)} style={{minHeight:"68px",padding:"3px 2px",
-                borderRight:"none",
-                borderBottom:"none",
-                background:isSel?"rgba(227,24,55,0.15)":isOpen?"rgba(255,179,0,0.06)":"transparent",
+                background:isSel?"rgba(227,24,55,0.15)":"transparent",
                 cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:"2px",opacity:isPast?0.4:1}}>
                 <div style={{width:"22px",height:"22px",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",
-                  fontSize:"11px",fontWeight:isToday||isOpen?"900":"500",marginTop:"2px",
-                  background:isToday?(dark?"rgba(255,255,255,0.18)":"rgba(0,0,0,0.12)"):isOpen?"rgba(255,179,0,0.22)":"transparent",
-                  color:dow===5?"#4FC3F7":dow===6?"#EF5350":isSel?"#fff":isOpen?"#FFB300":dark?"rgba(255,255,255,0.8)":"rgba(0,0,0,0.8)",
-                  border:isSel?"2px solid #E31837":isOpen?"2px solid #FFB300":"2px solid transparent"}}>{day}</div>
-                {isOpen&&!kg&&<div style={{fontSize:"8px",fontWeight:"800",color:"#FFB300",lineHeight:1}}>개막</div>}
+                  fontSize:"11px",fontWeight:isToday?"900":"500",marginTop:"2px",
+                  background:isToday?(dark?"rgba(255,255,255,0.18)":"rgba(0,0,0,0.12)"):"transparent",
+                  color:dow===5?"#4FC3F7":dow===6?"#EF5350":isSel?"#E31837":D.text,
+                  border:isSel?"2px solid #E31837":"2px solid transparent"}}>{day}</div>
                 {kg&&opp&&(
                   <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"1px"}}>
                     {isHome&&<div style={{fontSize:"7px",fontWeight:"800",color:"#E31837",background:"rgba(227,24,55,0.12)",borderRadius:"3px",padding:"0px 3px",lineHeight:"1.4"}}>홈</div>}
-                    <div style={{width:"23px",height:"23px",borderRadius:"50%",
-                      background:"transparent",border:"none",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"11px"}}>
-                      {opp.img?<img src={opp.img} style={{width:"100%",height:"100%",objectFit:"contain"}}/>:<span>{opp.emoji}</span>}
+                    <div style={{width:"23px",height:"23px",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                      {opp.img?<img src={opp.img} style={{width:"100%",height:"100%",objectFit:"contain"}}/>:<span style={{fontSize:"11px"}}>{opp.emoji}</span>}
                     </div>
-                    <div style={{fontSize:"7px",color:dark?"rgba(255,255,255,0.25)":"rgba(0,0,0,0.4)",fontWeight:"600",lineHeight:1}}>{kg.time}</div>
+                    <div style={{fontSize:"7px",color:D.textSub,fontWeight:"600",lineHeight:1}}>{kg.time}</div>
                   </div>
                 )}
               </div>
@@ -1101,27 +580,26 @@ function CalendarTab({onSelect, dark, D}) {
       <div>
         <div style={{display:"flex",alignItems:"baseline",gap:"8px",marginBottom:"10px"}}>
           <h3 style={{fontSize:"14px",fontWeight:"900",fontFamily:"'Noto Sans KR',sans-serif",color:D.text}}>{sm}월 {sd}일 ({dw})</h3>
-          <span style={{fontSize:"11px",color:dark?"rgba(255,255,255,0.3)":"rgba(0,0,0,0.45)",fontFamily:"'Noto Sans KR',sans-serif"}}>· {selGs.length>0?`${selGs.length}경기`:"경기 없음"}</span>
+          <span style={{fontSize:"11px",color:D.textSub,fontFamily:"'Noto Sans KR',sans-serif"}}>· {selGs.length>0?`${selGs.length}경기`:"경기 없음"}</span>
         </div>
         {new Date(sel)<new Date("2026-03-28")
-          ? <div style={{textAlign:"center",padding:"18px",color:dark?"rgba(255,255,255,0.2)":"rgba(0,0,0,0.3)",fontSize:"12px",fontFamily:"'Noto Sans KR',sans-serif",background:dark?"rgba(255,255,255,0.02)":"rgba(0,0,0,0.02)",borderRadius:"12px",border:"1px solid rgba(255,255,255,0.05)"}}>
-              ⚾ 개막 전 · 정규시즌 개막 <strong style={{color:"rgba(255,255,255,0.4)"}}>3월 28일 (토)</strong>
+          ? <div style={{textAlign:"center",padding:"18px",color:D.textSub,fontSize:"12px",fontFamily:"'Noto Sans KR',sans-serif",background:dark?"rgba(255,255,255,0.02)":"rgba(0,0,0,0.02)",borderRadius:"12px",border:`1px solid ${dark?"rgba(255,255,255,0.05)":"rgba(0,0,0,0.05)"}`}}>
+              ⚾ 개막 전 · 정규시즌 개막 <strong style={{color:D.textSub}}>3월 28일 (토)</strong>
             </div>
           : selGs.length===0
-          ? <div style={{textAlign:"center",padding:"18px",color:dark?"rgba(255,255,255,0.2)":"rgba(0,0,0,0.3)",fontSize:"12px",fontFamily:"'Noto Sans KR',sans-serif",background:dark?"rgba(255,255,255,0.02)":"rgba(0,0,0,0.02)",borderRadius:"12px",border:"1px solid rgba(255,255,255,0.05)"}}>
-              😴 휴식일 (월요일은 경기 없음)
+          ? <div style={{textAlign:"center",padding:"18px",color:D.textSub,fontSize:"12px",fontFamily:"'Noto Sans KR',sans-serif",background:dark?"rgba(255,255,255,0.02)":"rgba(0,0,0,0.02)",borderRadius:"12px",border:`1px solid ${dark?"rgba(255,255,255,0.05)":"rgba(0,0,0,0.05)"}`}}>
+              😴 휴식일
             </div>
           : <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
               {selGs.map((g,i)=>{
                 const isKia = g.away==="KIA"||g.home==="KIA";
-                // KIA 경기면 항상 KIA를 왼쪽에
                 const kiaIsHome = g.home==="KIA";
                 const leftKey  = isKia&&kiaIsHome ? g.home : g.away;
                 const rightKey = isKia&&kiaIsHome ? g.away : g.home;
                 const leftLabel  = isKia&&kiaIsHome ? "HOME" : "AWAY";
                 const rightLabel = isKia&&kiaIsHome ? "AWAY" : "HOME";
-                const aw = T[leftKey] ||{emoji:"⚾",color:"#888",name:leftKey};
-                const hw = T[rightKey]||{emoji:"⚾",color:"#888",name:rightKey};
+                const awT = T[leftKey]  || {emoji:"⚾",color:"#888",name:leftKey};
+                const hwT = T[rightKey] || {emoji:"⚾",color:"#888",name:rightKey};
                 return (
                   <div key={i} onClick={()=>onSelect(g)} style={{
                     background:isKia?"rgba(227,24,55,0.08)":D.card,
@@ -1133,26 +611,26 @@ function CalendarTab({onSelect, dark, D}) {
                         {isKia&&<span style={{fontSize:"9px",background:"#E31837",color:"#fff",borderRadius:"4px",padding:"1px 5px",fontWeight:"700"}}>🐯 KIA</span>}
                         {g.lineup&&<span style={{fontSize:"9px",background:"rgba(0,230,118,0.15)",color:"#00E676",borderRadius:"4px",padding:"1px 5px",fontWeight:"700",border:"1px solid rgba(0,230,118,0.3)"}}>라인업 공개</span>}
                       </div>
-                      <span style={{fontSize:"10px",color:dark?"rgba(255,255,255,0.22)":"rgba(0,0,0,0.35)",fontFamily:"'Noto Sans KR',sans-serif"}}>📍{g.stad} ›</span>
+                      <span style={{fontSize:"10px",color:D.textSub,fontFamily:"'Noto Sans KR',sans-serif"}}>📍{g.stad} ›</span>
                     </div>
                     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                       <div style={{display:"flex",alignItems:"center",gap:"7px",flex:1}}>
-                        <div style={{width:"36px",height:"36px",borderRadius:"50%",background:"transparent",border:"none",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"14px"}}>
-                          {aw.img?<img src={aw.img} style={{width:"100%",height:"100%",objectFit:"contain"}}/>:<span>{aw.emoji}</span>}
+                        <div style={{width:"36px",height:"36px",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                          {awT.img?<img src={awT.img} style={{width:"100%",height:"100%",objectFit:"contain"}}/>:<span style={{fontSize:"14px"}}>{awT.emoji}</span>}
                         </div>
                         <div>
-                          <div style={{fontSize:"12px",fontWeight:"700",fontFamily:"'Noto Sans KR',sans-serif",color:leftKey==="KIA"?"#ff6b6b":dark?"rgba(255,255,255,0.85)":"rgba(0,0,0,0.85)"}}>{aw.name}</div>
-                          <div style={{fontSize:"9px",color:dark?"rgba(255,255,255,0.22)":"rgba(0,0,0,0.35)",fontFamily:"'Noto Sans KR',sans-serif"}}>{leftLabel}</div>
+                          <div style={{fontSize:"12px",fontWeight:"700",fontFamily:"'Noto Sans KR',sans-serif",color:leftKey==="KIA"?"#ff6b6b":D.text}}>{awT.name}</div>
+                          <div style={{fontSize:"9px",color:D.textSub,fontFamily:"'Noto Sans KR',sans-serif"}}>{leftLabel}</div>
                         </div>
                       </div>
                       <div style={{fontSize:"12px",fontWeight:"800",color:"#FFB300",padding:"0 8px"}}>VS</div>
                       <div style={{display:"flex",alignItems:"center",gap:"7px",flex:1,flexDirection:"row-reverse"}}>
-                        <div style={{width:"36px",height:"36px",borderRadius:"50%",background:"transparent",border:"none",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"14px"}}>
-                          {hw.img?<img src={hw.img} style={{width:"100%",height:"100%",objectFit:"contain"}}/>:<span>{hw.emoji}</span>}
+                        <div style={{width:"36px",height:"36px",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                          {hwT.img?<img src={hwT.img} style={{width:"100%",height:"100%",objectFit:"contain"}}/>:<span style={{fontSize:"14px"}}>{hwT.emoji}</span>}
                         </div>
                         <div style={{textAlign:"right"}}>
-                          <div style={{fontSize:"12px",fontWeight:"700",fontFamily:"'Noto Sans KR',sans-serif",color:rightKey==="KIA"?"#ff6b6b":dark?"rgba(255,255,255,0.85)":"rgba(0,0,0,0.85)"}}>{hw.name}</div>
-                          <div style={{fontSize:"9px",color:dark?"rgba(255,255,255,0.22)":"rgba(0,0,0,0.35)",fontFamily:"'Noto Sans KR',sans-serif"}}>{rightLabel}</div>
+                          <div style={{fontSize:"12px",fontWeight:"700",fontFamily:"'Noto Sans KR',sans-serif",color:rightKey==="KIA"?"#ff6b6b":D.text}}>{hwT.name}</div>
+                          <div style={{fontSize:"9px",color:D.textSub,fontFamily:"'Noto Sans KR',sans-serif"}}>{rightLabel}</div>
                         </div>
                       </div>
                     </div>
@@ -1167,24 +645,28 @@ function CalendarTab({onSelect, dark, D}) {
 }
 
 function App() {
-  const [tab,setTab] = useState("calendar");
-  const [lcat,setLcat] = useState("batting");
-  const [time,setTime] = useState(new Date());
-  const [game,setGame] = useState(null);
-  const [dark,setDark] = useState(false);
+  const [tab, setTab] = useState("calendar");
+  const [lcat, setLcat] = useState("batting");
+  const [time, setTime] = useState(new Date());
+  const [game, setGame] = useState(null);
+  const [dark, setDark] = useState(false);
+
   const D = dark ? {
-    bg:"#0A0E1A", header:"#111827", card:"rgba(255,255,255,0.04)", cardBorder:dark?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.06)",
-    text:"#fff", textSub:"rgba(255,255,255,0.4)", textMuted:"rgba(255,255,255,0.2)",
+    bg:"#0A0E1A", card:"rgba(255,255,255,0.04)", cardBorder:"rgba(255,255,255,0.07)",
+    text:"#fff", textSub:"rgba(255,255,255,0.4)", textMuted:"rgba(255,255,255,0.15)",
     navBg:"#111827", navBorder:"rgba(255,255,255,0.08)", navText:"rgba(255,255,255,0.35)",
-    modalBg:"#0F1525", inputBg:"rgba(255,255,255,0.03)",
+    inputBg:"rgba(255,255,255,0.03)",
   } : {
-    bg:"#E8ECF1", header:"#ffffff", card:"#ffffff", cardBorder:"rgba(0,0,0,0.12)",
-    text:"#0A0E1A", textSub:"rgba(0,0,0,0.6)", textMuted:"rgba(0,0,0,0.4)",
-    navBg:"#ffffff", navBorder:"rgba(0,0,0,0.12)", navText:"rgba(0,0,0,0.5)",
-    modalBg:"#ffffff", inputBg:"rgba(0,0,0,0.04)",
+    bg:"#E8ECF1", card:"#ffffff", cardBorder:"rgba(0,0,0,0.1)",
+    text:"#0A0E1A", textSub:"rgba(0,0,0,0.5)", textMuted:"rgba(0,0,0,0.2)",
+    navBg:"#ffffff", navBorder:"rgba(0,0,0,0.1)", navText:"rgba(0,0,0,0.45)",
+    inputBg:"rgba(0,0,0,0.03)",
   };
 
-  useEffect(()=>{const t=setInterval(()=>setTime(new Date()),1000);return()=>clearInterval(t);},[]);
+  useEffect(()=>{
+    const t = setInterval(()=>setTime(new Date()),1000);
+    return ()=>clearInterval(t);
+  },[]);
 
   useEffect(()=>{
     document.body.style.background = dark ? "#0A0E1A" : "#E8ECF1";
@@ -1192,52 +674,43 @@ function App() {
     if(meta) meta.setAttribute("content", dark ? "#0A0E1A" : "#E8ECF1");
   },[dark]);
 
-  const TABS=[{id:"calendar",label:"📅 일정"},{id:"standings",label:"🏆 순위"},{id:"leaders",label:"⭐ 주목"}];
+  const openGame = g => { setGame(g); history.pushState({modal:true},""); };
+  const closeModal = useRef(null);
 
-  // 모달 열릴 때 히스토리 추가, 뒤로가기 시 모달만 닫기
-  const openGame = (g) => {
-    setGame(g);
-    history.pushState({modal:true}, "");
-  };
-  const closeModal = React.useRef(null);
   useEffect(()=>{
     const onPop = () => { if(closeModal.current) closeModal.current(); else setGame(null); };
     window.addEventListener("popstate", onPop);
-    return () => window.removeEventListener("popstate", onPop);
-  }, []);
-  const TAB_ORDER=["calendar","standings","leaders"];
+    return ()=>window.removeEventListener("popstate", onPop);
+  },[]);
 
-  // 스와이프 핸들러 (좌우만, 상하 스크롤 방해 안함)
-  const touchStart = React.useRef(null);
-  const handleTouchStart = (e) => {
-    touchStart.current = {x: e.touches[0].clientX, y: e.touches[0].clientY};
-  };
-  const handleTouchEnd = (e) => {
+  const TAB_ORDER = ["calendar","standings","leaders"];
+  const touchStart = useRef(null);
+  const handleTouchStart = e => { touchStart.current = {x:e.touches[0].clientX,y:e.touches[0].clientY}; };
+  const handleTouchEnd = e => {
     if(!touchStart.current) return;
     const dx = touchStart.current.x - e.changedTouches[0].clientX;
     const dy = touchStart.current.y - e.changedTouches[0].clientY;
     touchStart.current = null;
-    // 상하 움직임이 좌우보다 크면 스크롤로 판단, 무시
-    if(Math.abs(dy) > Math.abs(dx)) return;
-    // 좌우 이동이 70px 미만이면 무시
-    if(Math.abs(dx) < 70) return;
+    if(Math.abs(dy)>Math.abs(dx)||Math.abs(dx)<70) return;
     const cur = TAB_ORDER.indexOf(tab);
-    if(dx > 0 && cur < TAB_ORDER.length-1) setTab(TAB_ORDER[cur+1]);
-    if(dx < 0 && cur > 0) setTab(TAB_ORDER[cur-1]);
+    if(dx>0&&cur<TAB_ORDER.length-1) setTab(TAB_ORDER[cur+1]);
+    if(dx<0&&cur>0) setTab(TAB_ORDER[cur-1]);
   };
 
+  const TABS = [{id:"calendar",icon:"📅",label:"일정"},{id:"standings",icon:"🏆",label:"순위"},{id:"leaders",icon:"⭐",label:"주목"}];
+
   return (
-    <div style={{minHeight:"100vh",background:D.bg,fontFamily:"'Inter',sans-serif",color:D.text,transition:"background 0.3s,color 0.3s"}}>
-      {game&&<Modal game={game} onClose={()=>setGame(null)} closeRef={closeModal} dark={dark} D={D}/>}
+    <div style={{minHeight:"100vh",background:D.bg,color:D.text,transition:"background 0.3s,color 0.3s"}}>
+      {game && <Modal game={game} onClose={()=>setGame(null)} closeRef={closeModal} dark={dark} D={D}/>}
 
       {/* 헤더 */}
       <div style={{background:dark?"linear-gradient(180deg,#111827 0%,transparent 100%)":"linear-gradient(180deg,#ffffff 0%,transparent 100%)",padding:"18px 16px 12px",transition:"background 0.3s"}}>
         <div style={{maxWidth:"600px",margin:"0 auto"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"14px"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
             <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
               <span style={{fontSize:"24px"}}>🐯</span>
               <div>
-                <h1 style={{fontSize:"19px",fontWeight:"900",color:D.text,background:"none",WebkitTextFillColor:"unset",fontFamily:"'Noto Sans KR',sans-serif"}}>KBO 대시보드</h1>
+                <h1 style={{fontSize:"19px",fontWeight:"900",color:D.text,fontFamily:"'Noto Sans KR',sans-serif"}}>KBO 대시보드</h1>
                 <p style={{fontSize:"10px",fontWeight:"700",fontFamily:"'Noto Sans KR',sans-serif"}}>
                   <span style={{color:"#E31837"}}>KIA 타이거즈</span>
                   <span style={{color:D.textSub}}> · 2026 개막 D-2 ⚾</span>
@@ -1245,7 +718,7 @@ function App() {
               </div>
             </div>
             <div style={{textAlign:"right",display:"flex",flexDirection:"column",alignItems:"flex-end",gap:"6px"}}>
-              <div style={{fontSize:"15px",fontWeight:"700",letterSpacing:"0.04em",color:D.text}}>
+              <div style={{fontSize:"15px",fontWeight:"700",color:D.text}}>
                 {time.toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit",second:"2-digit"})}
               </div>
               <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
@@ -1254,61 +727,58 @@ function App() {
                 </div>
                 <button onClick={()=>setDark(!dark)} style={{
                   background:dark?"rgba(255,255,255,0.1)":"rgba(0,0,0,0.08)",
-                  border:"none",borderRadius:"20px",padding:"3px 8px",
-                  fontSize:"13px",cursor:"pointer",lineHeight:1,
-                }}>
+                  borderRadius:"20px",padding:"3px 8px",fontSize:"13px"}}>
                   {dark?"☀️":"🌙"}
                 </button>
               </div>
             </div>
           </div>
-          
         </div>
       </div>
 
       {/* 본문 */}
-      <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd} style={{maxWidth:"600px",margin:"0 auto",padding:"14px 16px 62px"}}>
+      <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}
+        style={{maxWidth:"600px",margin:"0 auto",padding:"14px 16px 70px"}}>
 
-        {/* 일정 탭 */}
-        {tab==="calendar"&&<CalendarTab onSelect={openGame} dark={dark} D={D}/>}
+        {tab==="calendar" && <CalendarTab onSelect={openGame} dark={dark} D={D}/>}
 
-        {/* 순위 탭 */}
-        {tab==="standings"&&(
+        {tab==="standings" && (
           <div style={{animation:"fadeIn 0.4s"}}>
             <div style={{display:"flex",alignItems:"center",gap:"8px",marginBottom:"12px"}}>
-              <h2 style={{fontSize:"12px",fontWeight:"700",color:"rgba(255,255,255,0.4)",letterSpacing:"0.1em",textTransform:"uppercase"}}>2025 최종 순위</h2>
+              <h2 style={{fontSize:"12px",fontWeight:"700",color:D.textSub,letterSpacing:"0.1em"}}>2025 최종 순위</h2>
               <span style={{fontSize:"10px",background:"rgba(255,179,0,0.15)",border:"1px solid rgba(255,179,0,0.3)",color:"#FFB300",borderRadius:"5px",padding:"1px 6px",fontFamily:"'Noto Sans KR',sans-serif",fontWeight:"700"}}>개막 전</span>
             </div>
             <div style={{background:D.inputBg,border:`1px solid ${D.cardBorder}`,borderRadius:"14px",overflow:"hidden"}}>
-              <div style={{display:"grid",gridTemplateColumns:"28px 1fr 70px",padding:"9px 12px",borderBottom:"1px solid rgba(255,255,255,0.07)",fontSize:"9px",fontWeight:"700",letterSpacing:"0.1em",color:dark?"rgba(255,255,255,0.25)":"rgba(0,0,0,0.4)",textTransform:"uppercase"}}>
+              <div style={{display:"grid",gridTemplateColumns:"28px 1fr 70px",padding:"9px 12px",borderBottom:`1px solid ${D.cardBorder}`,fontSize:"9px",fontWeight:"700",letterSpacing:"0.1em",color:D.textSub,textTransform:"uppercase"}}>
                 <span>#</span><span style={{fontFamily:"'Noto Sans KR',sans-serif"}}>팀</span><span style={{textAlign:"center"}}>비고</span>
               </div>
               {STAND.map((row,i)=>(
                 <div key={row.r} style={{display:"grid",gridTemplateColumns:"28px 1fr 70px",padding:"11px 12px",
-                  borderBottom:i<9?"1px solid rgba(255,255,255,0.04)":"none",
-                  background:row.s==="KIA"?"rgba(227,24,55,0.08)":i<2?dark?"rgba(255,255,255,0.02)":"rgba(0,0,0,0.02)":"transparent",alignItems:"center"}}>
-                  <span style={{fontSize:"13px",fontWeight:"800",color:row.r===1?"#FFD700":row.r===2?"#C0C0C0":row.r===3?"#CD7F32":row.r<=5?dark?"rgba(255,255,255,0.6)":"rgba(0,0,0,0.7)":dark?"rgba(255,255,255,0.25)":"rgba(0,0,0,0.4)"}}>{row.r}</span>
+                  borderBottom:i<9?`1px solid ${D.cardBorder}`:"none",
+                  background:row.s==="KIA"?"rgba(227,24,55,0.08)":"transparent",alignItems:"center"}}>
+                  <span style={{fontSize:"13px",fontWeight:"800",color:row.r===1?"#FFD700":row.r===2?"#C0C0C0":row.r===3?"#CD7F32":D.textSub}}>{row.r}</span>
                   <div style={{display:"flex",alignItems:"center",gap:"7px"}}>
-                    <div style={{width:"24px",height:"24px",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{T[row.s]?.img?<img src={T[row.s].img} style={{width:"100%",height:"100%",objectFit:"contain"}}/>:<span style={{fontSize:"13px"}}>{T[row.s]?.emoji}</span>}</div>
-                    <span style={{fontSize:"13px",fontWeight:row.s==="KIA"?"800":"600",fontFamily:"'Noto Sans KR',sans-serif",color:row.s==="KIA"?"#ff7070":dark?"rgba(255,255,255,0.85)":"rgba(0,0,0,0.85)"}}>{row.name}</span>
+                    <div style={{width:"24px",height:"24px",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                      {T[row.s]?.img?<img src={T[row.s].img} style={{width:"100%",height:"100%",objectFit:"contain"}}/>:<span style={{fontSize:"13px"}}>{T[row.s]?.emoji}</span>}
+                    </div>
+                    <span style={{fontSize:"13px",fontWeight:row.s==="KIA"?"800":"600",fontFamily:"'Noto Sans KR',sans-serif",color:row.s==="KIA"?"#ff7070":D.text}}>{row.name}</span>
                   </div>
-                  <span style={{textAlign:"center",fontSize:"10px",color:dark?"rgba(255,255,255,0.3)":"rgba(0,0,0,0.45)",fontFamily:"'Noto Sans KR',sans-serif"}}>{row.note}</span>
+                  <span style={{textAlign:"center",fontSize:"10px",color:D.textSub,fontFamily:"'Noto Sans KR',sans-serif"}}>{row.note}</span>
                 </div>
               ))}
             </div>
-            <p style={{fontSize:"10px",color:dark?"rgba(255,255,255,0.15)":"rgba(0,0,0,0.25)",textAlign:"right",marginTop:"6px",fontFamily:"'Noto Sans KR',sans-serif"}}>* 2025 정규시즌 최종 순위 기준</p>
+            <p style={{fontSize:"10px",color:D.textMuted,textAlign:"right",marginTop:"6px",fontFamily:"'Noto Sans KR',sans-serif"}}>* 2025 정규시즌 최종 순위 기준</p>
           </div>
         )}
 
-        {/* 주목 선수 탭 */}
-        {tab==="leaders"&&(
+        {tab==="leaders" && (
           <div style={{animation:"fadeIn 0.4s"}}>
             <div style={{display:"flex",gap:"6px",marginBottom:"12px"}}>
               {[{id:"batting",label:"타격"},{id:"hr",label:"홈런"},{id:"era",label:"투수"}].map(c=>(
                 <button key={c.id} onClick={()=>setLcat(c.id)} style={{
-                  padding:"6px 14px",background:lcat===c.id?"#E31837":"rgba(255,255,255,0.06)",
-                  border:"1px solid",borderColor:lcat===c.id?"#E31837":dark?"rgba(255,255,255,0.1)":"rgba(0,0,0,0.08)",
-                  color:"#fff",borderRadius:"20px",fontSize:"12px",fontWeight:"700",
+                  padding:"6px 14px",background:lcat===c.id?"#E31837":"transparent",
+                  border:`1px solid ${lcat===c.id?"#E31837":D.cardBorder}`,
+                  color:lcat===c.id?"#fff":D.text,borderRadius:"20px",fontSize:"12px",fontWeight:"700",
                   fontFamily:"'Noto Sans KR',sans-serif",transition:"all 0.2s"}}>{c.label} 주목</button>
               ))}
             </div>
@@ -1317,21 +787,23 @@ function App() {
             </div>
             <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
               {LEAD[lcat].map((p,i)=>(
-                <div key={p.name} style={{display:"flex",alignItems:"center",
+                <div key={i} style={{display:"flex",alignItems:"center",
                   background:p.team==="KIA"?"rgba(227,24,55,0.08)":D.card,
                   border:`1px solid ${p.team==="KIA"?"rgba(227,24,55,0.28)":D.cardBorder}`,
                   borderRadius:"13px",padding:"13px 15px",gap:"12px"}}>
-                  <div style={{width:"32px",height:"32px",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{T[p.team]?.img?<img src={T[p.team].img} style={{width:"100%",height:"100%",objectFit:"contain"}}/>:<span style={{fontSize:"18px"}}>{T[p.team]?.emoji}</span>}</div>
+                  <div style={{width:"32px",height:"32px",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                    {T[p.team]?.img?<img src={T[p.team].img} style={{width:"100%",height:"100%",objectFit:"contain"}}/>:<span style={{fontSize:"18px"}}>{T[p.team]?.emoji}</span>}
+                  </div>
                   <div style={{flex:1}}>
                     <div style={{display:"flex",alignItems:"center",gap:"5px"}}>
-                      <span style={{fontSize:"14px",fontWeight:"800",fontFamily:"'Noto Sans KR',sans-serif"}}>{p.name}</span>
+                      <span style={{fontSize:"14px",fontWeight:"800",fontFamily:"'Noto Sans KR',sans-serif",color:D.text}}>{p.name}</span>
                       {p.team==="KIA"&&<span style={{fontSize:"10px",background:"#E31837",color:"#fff",borderRadius:"4px",padding:"1px 5px",fontWeight:"700"}}>KIA</span>}
                     </div>
-                    <div style={{fontSize:"11px",color:dark?"rgba(255,255,255,0.35)":"rgba(0,0,0,0.5)",fontFamily:"'Noto Sans KR',sans-serif"}}>{p.team}</div>
+                    <div style={{fontSize:"11px",color:D.textSub,fontFamily:"'Noto Sans KR',sans-serif"}}>{p.team}</div>
                   </div>
                   <div style={{textAlign:"right"}}>
                     <div style={{fontSize:"12px",fontWeight:"700",color:p.team==="KIA"?"#ff6b6b":"#FFB300",fontFamily:"'Noto Sans KR',sans-serif"}}>{p.stat}</div>
-                    <div style={{fontSize:"10px",color:dark?"rgba(255,255,255,0.25)":"rgba(0,0,0,0.4)",fontFamily:"'Noto Sans KR',sans-serif"}}>{p.label}</div>
+                    <div style={{fontSize:"10px",color:D.textSub,fontFamily:"'Noto Sans KR',sans-serif"}}>{p.label}</div>
                   </div>
                 </div>
               ))}
@@ -1340,32 +812,12 @@ function App() {
         )}
       </div>
 
-      {/* 하단 네비게이션 바 */}
-      <div style={{
-        position:"fixed",bottom:0,left:0,right:0,
-        background:D.navBg,
-        borderTop:`1px solid ${D.navBorder}`,transition:"background 0.3s",
-        display:"flex",
-        paddingBottom:"6px",
-        zIndex:50,
-      }}>
+      {/* 하단 네비 */}
+      <div style={{position:"fixed",bottom:0,left:0,right:0,background:D.navBg,borderTop:`1px solid ${D.navBorder}`,display:"flex",paddingBottom:"6px",zIndex:50,transition:"background 0.3s"}}>
         {TABS.map(t=>(
-          <button key={t.id} onClick={()=>setTab(t.id)} style={{
-            flex:1,
-            padding:"4px 0 4px",
-            background:"transparent",
-            border:"none",
-            display:"flex",flexDirection:"column",alignItems:"center",gap:"3px",
-            color:tab===t.id?"#E31837":D.navText,
-            transition:"all 0.2s",
-          }}>
-            <span style={{fontSize:"18px"}}>
-              {t.id==="calendar"?"📅":t.id==="standings"?"🏆":"⭐"}
-            </span>
-            <span style={{fontSize:"9px",fontWeight:tab===t.id?"700":"400",fontFamily:"'Noto Sans KR',sans-serif"}}>
-              {t.id==="calendar"?"일정":t.id==="standings"?"순위":"주목"}
-            </span>
-            
+          <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,padding:"4px 0",background:"transparent",display:"flex",flexDirection:"column",alignItems:"center",gap:"3px",color:tab===t.id?"#E31837":D.navText,transition:"all 0.2s"}}>
+            <span style={{fontSize:"18px"}}>{t.icon}</span>
+            <span style={{fontSize:"9px",fontWeight:tab===t.id?"700":"400",fontFamily:"'Noto Sans KR',sans-serif"}}>{t.label}</span>
           </button>
         ))}
       </div>
@@ -1377,4 +829,3 @@ ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
 </script>
 </body>
 </html>
-
