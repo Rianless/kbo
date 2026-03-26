@@ -726,16 +726,16 @@ function Diamond({players, color}) {
   return (
     <div style={{position:"relative",width:"100%",paddingBottom:"88%"}}>
       <svg viewBox="0 0 340 300" style={{position:"absolute",inset:0,width:"100%",height:"100%"}}>
-        <path d="M170 260 L30 90 Q170 -20 310 90 Z" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.07)" strokeWidth="1"/>
-        <polygon points="170,75 240,150 170,225 100,150" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5"/>
+        <path d="M170 260 L30 90 Q170 -20 310 90 Z" fill="rgba(255,255,255,0.03)" stroke={dark?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.06)"} strokeWidth="1"/>
+        <polygon points="170,75 240,150 170,225 100,150" fill="rgba(255,255,255,0.03)" stroke={dark?dark?"rgba(255,255,255,0.15)":"rgba(0,0,0,0.2)":"rgba(0,0,0,0.25)"} strokeWidth="1.5"/>
         {[[170,75],[240,150],[170,225],[100,150]].map(([x,y],i)=>(
           <rect key={i} x={x-6} y={y-6} width="12" height="12" rx="2"
-            fill={i===3?"rgba(255,255,255,0.9)":"rgba(255,255,255,0.7)"}
+            fill={i===3?(dark?"rgba(255,255,255,0.9)":"rgba(0,0,0,0.7)"):(dark?"rgba(255,255,255,0.7)":"rgba(0,0,0,0.5)")}
             transform={`rotate(45,${x},${y})`}/>
         ))}
         <circle cx="170" cy="155" r="6" fill="rgba(180,120,60,0.4)" stroke="rgba(180,120,60,0.5)" strokeWidth="1"/>
-        <line x1="170" y1="225" x2="30" y2="90" stroke="rgba(255,255,255,0.08)" strokeWidth="1" strokeDasharray="4,4"/>
-        <line x1="170" y1="225" x2="310" y2="90" stroke="rgba(255,255,255,0.08)" strokeWidth="1" strokeDasharray="4,4"/>
+        <line x1="170" y1="225" x2="30" y2="90" stroke={dark?"rgba(255,255,255,0.08)":"rgba(0,0,0,0.1)"} strokeWidth="1" strokeDasharray="4,4"/>
+        <line x1="170" y1="225" x2="310" y2="90" stroke={dark?"rgba(255,255,255,0.08)":"rgba(0,0,0,0.1)"} strokeWidth="1" strokeDasharray="4,4"/>
       </svg>
       {players.map(p=>{
         const pos=PC[p.p]||PC.DH; const isP=p.p==="P";
@@ -781,7 +781,7 @@ function Modal({game, onClose, closeRef, dark, D}) {
         borderRadius:"22px 22px 0 0",maxHeight:"92vh",overflowY:"auto",animation:closing?"slideDown 0.28s ease forwards":"slideUp 0.3s ease",paddingBottom:"28px"}}
         onClick={e=>e.stopPropagation()}>
         <div style={{display:"flex",justifyContent:"center",padding:"10px 0 2px"}}>
-          <div style={{width:"34px",height:"4px",borderRadius:"2px",background:"rgba(255,255,255,0.15)"}}/>
+          <div style={{width:"34px",height:"4px",borderRadius:"2px",background:dark?dark?"rgba(255,255,255,0.15)":"rgba(0,0,0,0.2)":"rgba(0,0,0,0.25)"}}/>
         </div>
         {/* 헤더 */}
         <div style={{padding:"10px 18px 14px",borderBottom:"1px solid rgba(255,255,255,0.07)"}}>
@@ -789,7 +789,7 @@ function Modal({game, onClose, closeRef, dark, D}) {
             <span style={{fontSize:"11px",fontWeight:"700",color:"#FFB300",fontFamily:"'Noto Sans KR',sans-serif"}}>
               {game.time} 시작 · 📍 {game.stad}
             </span>
-            <button onClick={handleClose} style={{background:"rgba(255,255,255,0.08)",border:"none",color:"rgba(255,255,255,0.6)",
+            <button onClick={handleClose} style={{background:"rgba(255,255,255,0.08)",border:"none",color:dark?"rgba(255,255,255,0.6)":"rgba(0,0,0,0.7)",
               borderRadius:"50%",width:"28px",height:"28px",fontSize:"16px",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
           </div>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
@@ -799,7 +799,7 @@ function Modal({game, onClose, closeRef, dark, D}) {
               </div>
               <div>
                 <div style={{fontSize:"13px",fontWeight:"800",fontFamily:"'Noto Sans KR',sans-serif",color:game.away==="KIA"?"#ff6b6b":"#fff"}}>{aw.name}</div>
-                <div style={{fontSize:"10px",color:"rgba(255,255,255,0.3)",fontFamily:"'Noto Sans KR',sans-serif"}}>AWAY</div>
+                <div style={{fontSize:"10px",color:dark?"rgba(255,255,255,0.3)":"rgba(0,0,0,0.45)",fontFamily:"'Noto Sans KR',sans-serif"}}>AWAY</div>
               </div>
             </div>
             <div style={{textAlign:"center",padding:"0 8px"}}>
@@ -818,7 +818,7 @@ function Modal({game, onClose, closeRef, dark, D}) {
               </div>
               <div style={{textAlign:"right"}}>
                 <div style={{fontSize:"13px",fontWeight:"800",fontFamily:"'Noto Sans KR',sans-serif",color:game.home==="KIA"?"#ff6b6b":"#fff"}}>{hw.name}</div>
-                <div style={{fontSize:"10px",color:"rgba(255,255,255,0.3)",fontFamily:"'Noto Sans KR',sans-serif"}}>HOME</div>
+                <div style={{fontSize:"10px",color:dark?"rgba(255,255,255,0.3)":"rgba(0,0,0,0.45)",fontFamily:"'Noto Sans KR',sans-serif"}}>HOME</div>
               </div>
             </div>
           </div>
@@ -833,16 +833,16 @@ function Modal({game, onClose, closeRef, dark, D}) {
             </div>
             <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:"12px",padding:"4px 4px"}}>
               {isSch
-                ? <div style={{textAlign:"center",padding:"16px",color:"rgba(255,255,255,0.25)",fontSize:"12px",fontFamily:"'Noto Sans KR',sans-serif"}}>
+                ? <div style={{textAlign:"center",padding:"16px",color:dark?"rgba(255,255,255,0.25)":"rgba(0,0,0,0.4)",fontSize:"12px",fontFamily:"'Noto Sans KR',sans-serif"}}>
                     경기 예정 · 경기 후 스코어가 표시됩니다
                   </div>
                 : <div style={{overflowX:"auto"}}>
                     <table style={{width:"100%",borderCollapse:"collapse",fontSize:"12px",minWidth:"300px"}}>
                       <thead>
                         <tr>
-                          <td style={{padding:"6px 6px",color:"rgba(255,255,255,0.3)",width:"55px"}}></td>
+                          <td style={{padding:"6px 6px",color:dark?"rgba(255,255,255,0.3)":"rgba(0,0,0,0.45)",width:"55px"}}></td>
                           {[1,2,3,4,5,6,7,8,9].map(i=><td key={i} style={{textAlign:"center",padding:"6px 3px",color:"rgba(255,255,255,0.4)",fontWeight:"700"}}>{i}</td>)}
-                          <td style={{textAlign:"center",padding:"6px 5px",color:"rgba(255,255,255,0.6)",fontWeight:"900",fontSize:"13px"}}>R</td>
+                          <td style={{textAlign:"center",padding:"6px 5px",color:dark?"rgba(255,255,255,0.6)":"rgba(0,0,0,0.7)",fontWeight:"900",fontSize:"13px"}}>R</td>
                         </tr>
                       </thead>
                       <tbody>
@@ -854,11 +854,11 @@ function Modal({game, onClose, closeRef, dark, D}) {
                                 {nm}
                               </div>
                             </td>
-                            {sc.map((s,i)=><td key={i} style={{textAlign:"center",padding:"8px 3px",color:s>0?"#fff":"rgba(255,255,255,0.22)",fontWeight:s>0?"700":"400",borderTop:"1px solid rgba(255,255,255,0.07)"}}>
-                              {s===-1?<span style={{color:"rgba(255,255,255,0.1)"}}>-</span>:s}
+                            {sc.map((s,i)=><td key={i} style={{textAlign:"center",padding:"8px 3px",color:s>0?"#fff":dark?"rgba(255,255,255,0.22)":"rgba(0,0,0,0.35)",fontWeight:s>0?"700":"400",borderTop:"1px solid rgba(255,255,255,0.07)"}}>
+                              {s===-1?<span style={{color:dark?"rgba(255,255,255,0.1)":"rgba(0,0,0,0.08)"}}>-</span>:s}
                             </td>)}
                             <td style={{textAlign:"center",padding:"8px 5px",fontWeight:"900",fontSize:"14px",
-                              color:tot===Math.max(at,ht)&&at!==ht?cl:"rgba(255,255,255,0.85)",borderTop:"1px solid rgba(255,255,255,0.07)"}}>{tot}</td>
+                              color:tot===Math.max(at,ht)&&at!==ht?cl:dark?"rgba(255,255,255,0.85)":"rgba(0,0,0,0.85)",borderTop:"1px solid rgba(255,255,255,0.07)"}}>{tot}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -879,7 +879,7 @@ function Modal({game, onClose, closeRef, dark, D}) {
                 <div style={{display:"flex",gap:"4px"}}>
                   {[{id:"away",label:game.away,info:aw},{id:"home",label:game.home,info:hw}].map(({id,label,info})=>(
                     <button key={id} onClick={()=>setLt(id)} style={{
-                      padding:"4px 10px",background:lt===id?info.color:"rgba(255,255,255,0.07)",
+                      padding:"4px 10px",background:lt===id?info.color:dark?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.06)",
                       border:"none",borderRadius:"8px",color:"#fff",fontSize:"11px",fontWeight:"700",
                       fontFamily:"'Noto Sans KR',sans-serif",transition:"all 0.2s"}}>
                       {T[label]?.emoji} {label}
@@ -894,7 +894,7 @@ function Modal({game, onClose, closeRef, dark, D}) {
                   <div style={{fontSize:"13px",color:"rgba(255,255,255,0.4)",fontFamily:"'Noto Sans KR',sans-serif"}}>라인업은 경기 당일 발표됩니다</div>
                   <div style={{fontSize:"11px",color:"rgba(255,255,255,0.2)",marginTop:"4px",fontFamily:"'Noto Sans KR',sans-serif"}}>보통 경기 시작 1시간 전 공개</div>
                 </div>
-              : <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:"14px",padding:"12px 10px"}}>
+              : <div style={{background:dark?"rgba(255,255,255,0.02)":"rgba(0,0,0,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:"14px",padding:"12px 10px"}}>
                   <div style={{textAlign:"center",marginBottom:"4px",fontSize:"12px",fontWeight:"700",color:ct.color,fontFamily:"'Noto Sans KR',sans-serif"}}>
                     {ct.emoji} {ct.name}
                   </div>
@@ -905,7 +905,7 @@ function Modal({game, onClose, closeRef, dark, D}) {
                         <span style={{fontSize:"10px",fontWeight:"900",minWidth:"17px",textAlign:"center",color:p.p==="P"?"#fff":ct.color,
                           background:p.p==="P"?ct.color+"cc":"transparent",borderRadius:"3px",padding:p.p==="P"?"1px 3px":"0"}}>{p.n}</span>
                         <span style={{fontSize:"12px",fontWeight:"700",color:"#fff",fontFamily:"'Noto Sans KR',sans-serif",flex:1}}>{p.name}</span>
-                        <span style={{fontSize:"10px",color:"rgba(255,255,255,0.35)"}}>{p.p}</span>
+                        <span style={{fontSize:"10px",color:dark?"rgba(255,255,255,0.35)":"rgba(0,0,0,0.5)"}}>{p.p}</span>
                       </div>
                     ))}
                   </div>
@@ -956,7 +956,7 @@ function CalendarTab({onSelect, dark, D}) {
           </div>
           <div style={{textAlign:"right"}}>
             <div style={{fontSize:"11px",color:"#FFB300",fontWeight:"700",fontFamily:"'Noto Sans KR',sans-serif"}}>KIA 원정개막</div>
-            <div style={{fontSize:"11px",color:"rgba(255,255,255,0.3)",fontFamily:"'Noto Sans KR',sans-serif"}}>🐯 vs 🚀</div>
+            <div style={{fontSize:"11px",color:dark?"rgba(255,255,255,0.3)":"rgba(0,0,0,0.45)",fontFamily:"'Noto Sans KR',sans-serif"}}>🐯 vs 🚀</div>
           </div>
         </div>
       )}
@@ -964,7 +964,7 @@ function CalendarTab({onSelect, dark, D}) {
       <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:"16px",marginBottom:"12px"}}>
         <button onClick={()=>mo===1?(setYr(y=>y-1),setMo(12)):setMo(m=>m-1)}
           style={{background:"none",border:"none",color:"#E31837",fontSize:"22px",padding:"4px 10px",lineHeight:1}}>‹</button>
-        <h2 style={{fontSize:"17px",fontWeight:"900",fontFamily:"'Noto Sans KR',sans-serif",minWidth:"110px",textAlign:"center"}}>{yr}년 {mo}월</h2>
+        <h2 style={{fontSize:"17px",fontWeight:"900",fontFamily:"'Noto Sans KR',sans-serif",minWidth:"110px",textAlign:"center",color:D.text}}>{yr}년 {mo}월</h2>
         <button onClick={()=>mo===12?(setYr(y=>y+1),setMo(1)):setMo(m=>m+1)}
           style={{background:"none",border:"none",color:"#E31837",fontSize:"22px",padding:"4px 10px",lineHeight:1}}>›</button>
       </div>
@@ -973,7 +973,7 @@ function CalendarTab({onSelect, dark, D}) {
         <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",borderBottom:"1px solid rgba(255,255,255,0.07)"}}>
           {WDAYS.map((w,i)=>(
             <div key={w} style={{textAlign:"center",padding:"8px 0",fontSize:"11px",fontWeight:"700",
-              color:i===5?"#4FC3F7":i===6?"#EF5350":"rgba(255,255,255,0.35)",fontFamily:"'Noto Sans KR',sans-serif"}}>{w}</div>
+              color:i===5?"#4FC3F7":i===6?"#EF5350":dark?"rgba(255,255,255,0.35)":"rgba(0,0,0,0.5)",fontFamily:"'Noto Sans KR',sans-serif"}}>{w}</div>
           ))}
         </div>
         <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)"}}>
@@ -990,14 +990,14 @@ function CalendarTab({onSelect, dark, D}) {
             const isPast = new Date(ds)<new Date("2026-03-28");
             return (
               <div key={day} onClick={()=>setSel(ds)} style={{minHeight:"68px",padding:"3px 2px",
-                borderRight:idx%7!==6?"1px solid rgba(255,255,255,0.04)":"none",
-                borderBottom:"1px solid rgba(255,255,255,0.04)",
+                borderRight:idx%7!==6?`1px solid ${dark?"rgba(255,255,255,0.04)":"rgba(0,0,0,0.06)"}`: "none",
+                borderBottom:`1px solid ${dark?"rgba(255,255,255,0.04)":"rgba(0,0,0,0.06)"}`,
                 background:isSel?"rgba(227,24,55,0.15)":isOpen?"rgba(255,179,0,0.06)":"transparent",
                 cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:"2px",opacity:isPast?0.4:1}}>
                 <div style={{width:"22px",height:"22px",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",
                   fontSize:"11px",fontWeight:isToday||isOpen?"900":"500",marginTop:"2px",
-                  background:isToday?"rgba(255,255,255,0.18)":isOpen?"rgba(255,179,0,0.22)":"transparent",
-                  color:dow===5?"#4FC3F7":dow===6?"#EF5350":isSel?"#fff":isOpen?"#FFB300":"rgba(255,255,255,0.8)",
+                  background:isToday?(dark?"rgba(255,255,255,0.18)":"rgba(0,0,0,0.12)"):isOpen?"rgba(255,179,0,0.22)":"transparent",
+                  color:dow===5?"#4FC3F7":dow===6?"#EF5350":isSel?"#fff":isOpen?"#FFB300":dark?"rgba(255,255,255,0.8)":"rgba(0,0,0,0.8)",
                   border:isSel?"2px solid #E31837":isOpen?"2px solid #FFB300":"2px solid transparent"}}>{day}</div>
                 {isOpen&&!kg&&<div style={{fontSize:"8px",fontWeight:"800",color:"#FFB300",lineHeight:1}}>개막</div>}
                 {kg&&opp&&(
@@ -1006,7 +1006,7 @@ function CalendarTab({onSelect, dark, D}) {
                       background:"transparent",border:"none",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"11px"}}>
                       {opp.img?<img src={opp.img} style={{width:"100%",height:"100%",objectFit:"contain"}}/>:<span>{opp.emoji}</span>}
                     </div>
-                    <div style={{fontSize:"7px",color:"rgba(255,255,255,0.25)",fontWeight:"600",lineHeight:1}}>{kg.time}</div>
+                    <div style={{fontSize:"7px",color:dark?"rgba(255,255,255,0.25)":"rgba(0,0,0,0.4)",fontWeight:"600",lineHeight:1}}>{kg.time}</div>
                   </div>
                 )}
               </div>
@@ -1017,15 +1017,15 @@ function CalendarTab({onSelect, dark, D}) {
 
       <div>
         <div style={{display:"flex",alignItems:"baseline",gap:"8px",marginBottom:"10px"}}>
-          <h3 style={{fontSize:"14px",fontWeight:"900",fontFamily:"'Noto Sans KR',sans-serif"}}>{sm}월 {sd}일 ({dw})</h3>
-          <span style={{fontSize:"11px",color:"rgba(255,255,255,0.3)",fontFamily:"'Noto Sans KR',sans-serif"}}>· {selGs.length>0?`${selGs.length}경기`:"경기 없음"}</span>
+          <h3 style={{fontSize:"14px",fontWeight:"900",fontFamily:"'Noto Sans KR',sans-serif",color:D.text}}>{sm}월 {sd}일 ({dw})</h3>
+          <span style={{fontSize:"11px",color:dark?"rgba(255,255,255,0.3)":"rgba(0,0,0,0.45)",fontFamily:"'Noto Sans KR',sans-serif"}}>· {selGs.length>0?`${selGs.length}경기`:"경기 없음"}</span>
         </div>
         {new Date(sel)<new Date("2026-03-28")
-          ? <div style={{textAlign:"center",padding:"18px",color:"rgba(255,255,255,0.2)",fontSize:"12px",fontFamily:"'Noto Sans KR',sans-serif",background:"rgba(255,255,255,0.02)",borderRadius:"12px",border:"1px solid rgba(255,255,255,0.05)"}}>
+          ? <div style={{textAlign:"center",padding:"18px",color:dark?"rgba(255,255,255,0.2)":"rgba(0,0,0,0.3)",fontSize:"12px",fontFamily:"'Noto Sans KR',sans-serif",background:dark?"rgba(255,255,255,0.02)":"rgba(0,0,0,0.02)",borderRadius:"12px",border:"1px solid rgba(255,255,255,0.05)"}}>
               ⚾ 개막 전 · 정규시즌 개막 <strong style={{color:"rgba(255,255,255,0.4)"}}>3월 28일 (토)</strong>
             </div>
           : selGs.length===0
-          ? <div style={{textAlign:"center",padding:"18px",color:"rgba(255,255,255,0.2)",fontSize:"12px",fontFamily:"'Noto Sans KR',sans-serif",background:"rgba(255,255,255,0.02)",borderRadius:"12px",border:"1px solid rgba(255,255,255,0.05)"}}>
+          ? <div style={{textAlign:"center",padding:"18px",color:dark?"rgba(255,255,255,0.2)":"rgba(0,0,0,0.3)",fontSize:"12px",fontFamily:"'Noto Sans KR',sans-serif",background:dark?"rgba(255,255,255,0.02)":"rgba(0,0,0,0.02)",borderRadius:"12px",border:"1px solid rgba(255,255,255,0.05)"}}>
               😴 휴식일 (월요일은 경기 없음)
             </div>
           : <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
@@ -1050,7 +1050,7 @@ function CalendarTab({onSelect, dark, D}) {
                         {isKia&&<span style={{fontSize:"9px",background:"#E31837",color:"#fff",borderRadius:"4px",padding:"1px 5px",fontWeight:"700"}}>🐯 KIA</span>}
                         {g.lineup&&<span style={{fontSize:"9px",background:"rgba(0,230,118,0.15)",color:"#00E676",borderRadius:"4px",padding:"1px 5px",fontWeight:"700",border:"1px solid rgba(0,230,118,0.3)"}}>라인업 공개</span>}
                       </div>
-                      <span style={{fontSize:"10px",color:"rgba(255,255,255,0.22)",fontFamily:"'Noto Sans KR',sans-serif"}}>📍{g.stad} ›</span>
+                      <span style={{fontSize:"10px",color:dark?"rgba(255,255,255,0.22)":"rgba(0,0,0,0.35)",fontFamily:"'Noto Sans KR',sans-serif"}}>📍{g.stad} ›</span>
                     </div>
                     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                       <div style={{display:"flex",alignItems:"center",gap:"7px",flex:1}}>
@@ -1058,8 +1058,8 @@ function CalendarTab({onSelect, dark, D}) {
                           {aw.img?<img src={aw.img} style={{width:"100%",height:"100%",objectFit:"contain"}}/>:<span>{aw.emoji}</span>}
                         </div>
                         <div>
-                          <div style={{fontSize:"12px",fontWeight:"700",fontFamily:"'Noto Sans KR',sans-serif",color:leftKey==="KIA"?"#ff6b6b":"rgba(255,255,255,0.85)"}}>{aw.name}</div>
-                          <div style={{fontSize:"9px",color:"rgba(255,255,255,0.22)",fontFamily:"'Noto Sans KR',sans-serif"}}>{leftLabel}</div>
+                          <div style={{fontSize:"12px",fontWeight:"700",fontFamily:"'Noto Sans KR',sans-serif",color:leftKey==="KIA"?"#ff6b6b":dark?"rgba(255,255,255,0.85)":"rgba(0,0,0,0.85)"}}>{aw.name}</div>
+                          <div style={{fontSize:"9px",color:dark?"rgba(255,255,255,0.22)":"rgba(0,0,0,0.35)",fontFamily:"'Noto Sans KR',sans-serif"}}>{leftLabel}</div>
                         </div>
                       </div>
                       <div style={{fontSize:"12px",fontWeight:"800",color:"#FFB300",padding:"0 8px"}}>VS</div>
@@ -1068,8 +1068,8 @@ function CalendarTab({onSelect, dark, D}) {
                           {hw.img?<img src={hw.img} style={{width:"100%",height:"100%",objectFit:"contain"}}/>:<span>{hw.emoji}</span>}
                         </div>
                         <div style={{textAlign:"right"}}>
-                          <div style={{fontSize:"12px",fontWeight:"700",fontFamily:"'Noto Sans KR',sans-serif",color:rightKey==="KIA"?"#ff6b6b":"rgba(255,255,255,0.85)"}}>{hw.name}</div>
-                          <div style={{fontSize:"9px",color:"rgba(255,255,255,0.22)",fontFamily:"'Noto Sans KR',sans-serif"}}>{rightLabel}</div>
+                          <div style={{fontSize:"12px",fontWeight:"700",fontFamily:"'Noto Sans KR',sans-serif",color:rightKey==="KIA"?"#ff6b6b":dark?"rgba(255,255,255,0.85)":"rgba(0,0,0,0.85)"}}>{hw.name}</div>
+                          <div style={{fontSize:"9px",color:dark?"rgba(255,255,255,0.22)":"rgba(0,0,0,0.35)",fontFamily:"'Noto Sans KR',sans-serif"}}>{rightLabel}</div>
                         </div>
                       </div>
                     </div>
@@ -1090,15 +1090,15 @@ function App() {
   const [game,setGame] = useState(null);
   const [dark,setDark] = useState(true);
   const D = dark ? {
-    bg:"#0A0E1A", header:"#111827", card:"rgba(255,255,255,0.04)", cardBorder:"rgba(255,255,255,0.07)",
+    bg:"#0A0E1A", header:"#111827", card:dark?"rgba(255,255,255,0.04)":"rgba(0,0,0,0.03)", cardBorder:dark?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.06)",
     text:"#fff", textSub:"rgba(255,255,255,0.4)", textMuted:"rgba(255,255,255,0.2)",
-    navBg:"#111827", navBorder:"rgba(255,255,255,0.08)", navText:"rgba(255,255,255,0.35)",
+    navBg:"#111827", navBorder:"rgba(255,255,255,0.08)", navText:dark?"rgba(255,255,255,0.35)":"rgba(0,0,0,0.5)",
     modalBg:"#0F1525", inputBg:"rgba(255,255,255,0.03)",
   } : {
-    bg:"#F0F2F5", header:"#ffffff", card:"#ffffff", cardBorder:"rgba(0,0,0,0.08)",
-    text:"#111", textSub:"rgba(0,0,0,0.45)", textMuted:"rgba(0,0,0,0.25)",
-    navBg:"#ffffff", navBorder:"rgba(0,0,0,0.08)", navText:"rgba(0,0,0,0.35)",
-    modalBg:"#ffffff", inputBg:"rgba(0,0,0,0.03)",
+    bg:"#E8ECF1", header:"#ffffff", card:"#ffffff", cardBorder:"rgba(0,0,0,0.12)",
+    text:"#0A0E1A", textSub:"rgba(0,0,0,0.6)", textMuted:"rgba(0,0,0,0.4)",
+    navBg:"#ffffff", navBorder:"rgba(0,0,0,0.12)", navText:"rgba(0,0,0,0.5)",
+    modalBg:"#ffffff", inputBg:"rgba(0,0,0,0.04)",
   };
 
   useEffect(()=>{const t=setInterval(()=>setTime(new Date()),1000);return()=>clearInterval(t);},[]);
@@ -1148,8 +1148,7 @@ function App() {
             <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
               <span style={{fontSize:"24px"}}>🐯</span>
               <div>
-                <h1 style={{fontSize:"19px",fontWeight:"900",background:"linear-gradient(135deg,#fff,rgba(255,255,255,0.5))",
-                  WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",fontFamily:"'Noto Sans KR',sans-serif"}}>KBO 대시보드</h1>
+                <h1 style={{fontSize:"19px",fontWeight:"900",color:D.text,background:"none",WebkitTextFillColor:"unset",fontFamily:"'Noto Sans KR',sans-serif"}}>KBO 대시보드</h1>
                 <p style={{fontSize:"10px",fontWeight:"700",fontFamily:"'Noto Sans KR',sans-serif"}}>
                   <span style={{color:"#E31837"}}>KIA 타이거즈</span>
                   <span style={{color:D.textSub}}> · 2026 개막 D-2 ⚾</span>
@@ -1165,7 +1164,7 @@ function App() {
                   {time.toLocaleDateString("ko-KR",{month:"long",day:"numeric",weekday:"short"})}
                 </div>
                 <button onClick={()=>setDark(!dark)} style={{
-                  background:dark?"rgba(255,255,255,0.1)":"rgba(0,0,0,0.08)",
+                  background:dark?dark?"rgba(255,255,255,0.1)":"rgba(0,0,0,0.08)":"rgba(0,0,0,0.08)",
                   border:"none",borderRadius:"20px",padding:"3px 8px",
                   fontSize:"13px",cursor:"pointer",lineHeight:1,
                 }}>
@@ -1192,23 +1191,23 @@ function App() {
               <span style={{fontSize:"10px",background:"rgba(255,179,0,0.15)",border:"1px solid rgba(255,179,0,0.3)",color:"#FFB300",borderRadius:"5px",padding:"1px 6px",fontFamily:"'Noto Sans KR',sans-serif",fontWeight:"700"}}>개막 전</span>
             </div>
             <div style={{background:D.inputBg,border:`1px solid ${D.cardBorder}`,borderRadius:"14px",overflow:"hidden"}}>
-              <div style={{display:"grid",gridTemplateColumns:"28px 1fr 70px",padding:"9px 12px",borderBottom:"1px solid rgba(255,255,255,0.07)",fontSize:"9px",fontWeight:"700",letterSpacing:"0.1em",color:"rgba(255,255,255,0.25)",textTransform:"uppercase"}}>
+              <div style={{display:"grid",gridTemplateColumns:"28px 1fr 70px",padding:"9px 12px",borderBottom:"1px solid rgba(255,255,255,0.07)",fontSize:"9px",fontWeight:"700",letterSpacing:"0.1em",color:dark?"rgba(255,255,255,0.25)":"rgba(0,0,0,0.4)",textTransform:"uppercase"}}>
                 <span>#</span><span style={{fontFamily:"'Noto Sans KR',sans-serif"}}>팀</span><span style={{textAlign:"center"}}>비고</span>
               </div>
               {STAND.map((row,i)=>(
                 <div key={row.r} style={{display:"grid",gridTemplateColumns:"28px 1fr 70px",padding:"11px 12px",
                   borderBottom:i<9?"1px solid rgba(255,255,255,0.04)":"none",
-                  background:row.s==="KIA"?"rgba(227,24,55,0.08)":i<2?"rgba(255,255,255,0.02)":"transparent",alignItems:"center"}}>
-                  <span style={{fontSize:"13px",fontWeight:"800",color:row.r===1?"#FFD700":row.r===2?"#C0C0C0":row.r===3?"#CD7F32":row.r<=5?"rgba(255,255,255,0.6)":"rgba(255,255,255,0.25)"}}>{row.r}</span>
+                  background:row.s==="KIA"?"rgba(227,24,55,0.08)":i<2?dark?"rgba(255,255,255,0.02)":"rgba(0,0,0,0.02)":"transparent",alignItems:"center"}}>
+                  <span style={{fontSize:"13px",fontWeight:"800",color:row.r===1?"#FFD700":row.r===2?"#C0C0C0":row.r===3?"#CD7F32":row.r<=5?dark?"rgba(255,255,255,0.6)":"rgba(0,0,0,0.7)":dark?"rgba(255,255,255,0.25)":"rgba(0,0,0,0.4)"}}>{row.r}</span>
                   <div style={{display:"flex",alignItems:"center",gap:"7px"}}>
                     <div style={{width:"24px",height:"24px",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{T[row.s]?.img?<img src={T[row.s].img} style={{width:"100%",height:"100%",objectFit:"contain"}}/>:<span style={{fontSize:"13px"}}>{T[row.s]?.emoji}</span>}</div>
-                    <span style={{fontSize:"13px",fontWeight:row.s==="KIA"?"800":"600",fontFamily:"'Noto Sans KR',sans-serif",color:row.s==="KIA"?"#ff7070":"rgba(255,255,255,0.85)"}}>{row.name}</span>
+                    <span style={{fontSize:"13px",fontWeight:row.s==="KIA"?"800":"600",fontFamily:"'Noto Sans KR',sans-serif",color:row.s==="KIA"?"#ff7070":dark?"rgba(255,255,255,0.85)":"rgba(0,0,0,0.85)"}}>{row.name}</span>
                   </div>
-                  <span style={{textAlign:"center",fontSize:"10px",color:"rgba(255,255,255,0.3)",fontFamily:"'Noto Sans KR',sans-serif"}}>{row.note}</span>
+                  <span style={{textAlign:"center",fontSize:"10px",color:dark?"rgba(255,255,255,0.3)":"rgba(0,0,0,0.45)",fontFamily:"'Noto Sans KR',sans-serif"}}>{row.note}</span>
                 </div>
               ))}
             </div>
-            <p style={{fontSize:"10px",color:"rgba(255,255,255,0.15)",textAlign:"right",marginTop:"6px",fontFamily:"'Noto Sans KR',sans-serif"}}>* 2025 정규시즌 최종 순위 기준</p>
+            <p style={{fontSize:"10px",color:dark?dark?"rgba(255,255,255,0.15)":"rgba(0,0,0,0.2)":"rgba(0,0,0,0.25)",textAlign:"right",marginTop:"6px",fontFamily:"'Noto Sans KR',sans-serif"}}>* 2025 정규시즌 최종 순위 기준</p>
           </div>
         )}
 
@@ -1219,7 +1218,7 @@ function App() {
               {[{id:"batting",label:"타격"},{id:"hr",label:"홈런"},{id:"era",label:"투수"}].map(c=>(
                 <button key={c.id} onClick={()=>setLcat(c.id)} style={{
                   padding:"6px 14px",background:lcat===c.id?"#E31837":"rgba(255,255,255,0.06)",
-                  border:"1px solid",borderColor:lcat===c.id?"#E31837":"rgba(255,255,255,0.1)",
+                  border:"1px solid",borderColor:lcat===c.id?"#E31837":dark?"rgba(255,255,255,0.1)":"rgba(0,0,0,0.08)",
                   color:"#fff",borderRadius:"20px",fontSize:"12px",fontWeight:"700",
                   fontFamily:"'Noto Sans KR',sans-serif",transition:"all 0.2s"}}>{c.label} 주목</button>
               ))}
@@ -1239,11 +1238,11 @@ function App() {
                       <span style={{fontSize:"14px",fontWeight:"800",fontFamily:"'Noto Sans KR',sans-serif"}}>{p.name}</span>
                       {p.team==="KIA"&&<span style={{fontSize:"10px",background:"#E31837",color:"#fff",borderRadius:"4px",padding:"1px 5px",fontWeight:"700"}}>KIA</span>}
                     </div>
-                    <div style={{fontSize:"11px",color:"rgba(255,255,255,0.35)",fontFamily:"'Noto Sans KR',sans-serif"}}>{p.team}</div>
+                    <div style={{fontSize:"11px",color:dark?"rgba(255,255,255,0.35)":"rgba(0,0,0,0.5)",fontFamily:"'Noto Sans KR',sans-serif"}}>{p.team}</div>
                   </div>
                   <div style={{textAlign:"right"}}>
                     <div style={{fontSize:"12px",fontWeight:"700",color:p.team==="KIA"?"#ff6b6b":"#FFB300",fontFamily:"'Noto Sans KR',sans-serif"}}>{p.stat}</div>
-                    <div style={{fontSize:"10px",color:"rgba(255,255,255,0.25)",fontFamily:"'Noto Sans KR',sans-serif"}}>{p.label}</div>
+                    <div style={{fontSize:"10px",color:dark?"rgba(255,255,255,0.25)":"rgba(0,0,0,0.4)",fontFamily:"'Noto Sans KR',sans-serif"}}>{p.label}</div>
                   </div>
                 </div>
               ))}
