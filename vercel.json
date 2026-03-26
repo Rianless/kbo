@@ -1,0 +1,6 @@
+{
+  "routes": [
+    { "src": "/mlb", "dest": "/mlb.html" },
+    { "src": "/api/(.*)", "dest": "/api/$1" }
+  ]
+}
