@@ -779,8 +779,7 @@ function Modal({game, onClose}) {
           </div>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
             <div style={{display:"flex",alignItems:"center",gap:"9px",flex:1}}>
-              <div style={{width:"48px",height:"48px",borderRadius:"50%",background:"transparent",border:"none",
-                overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"22px"}}>
+              <div style={{width:"48px",height:"48px",background:"transparent",border:"none",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"22px"}}>
               {aw.img?<img src={aw.img} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<span>{aw.emoji}</span>}
               </div>
               <div>
@@ -799,8 +798,7 @@ function Modal({game, onClose}) {
               }
             </div>
             <div style={{display:"flex",alignItems:"center",gap:"9px",flex:1,flexDirection:"row-reverse"}}>
-              <div style={{width:"48px",height:"48px",borderRadius:"50%",background:"transparent",border:"none",
-                overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"22px"}}>
+              <div style={{width:"48px",height:"48px",background:"transparent",border:"none",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"22px"}}>
               {hw.img?<img src={hw.img} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<span>{hw.emoji}</span>}
               </div>
               <div style={{textAlign:"right"}}>
@@ -990,8 +988,7 @@ function CalendarTab({onSelect}) {
                 {kg&&opp&&(
                   <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:"1px"}}>
                     <div style={{width:"23px",height:"23px",borderRadius:"50%",
-                      background:"transparent",border:"none",
-                      overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"11px"}}>
+                      background:"transparent",border:"none",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"11px"}}>
                       {opp.img?<img src={opp.img} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<span>{opp.emoji}</span>}
                     </div>
                     <div style={{fontSize:"7px",color:"rgba(255,255,255,0.25)",fontWeight:"600",lineHeight:1}}>{kg.time}</div>
@@ -1042,7 +1039,7 @@ function CalendarTab({onSelect}) {
                     </div>
                     <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
                       <div style={{display:"flex",alignItems:"center",gap:"7px",flex:1}}>
-                        <div style={{width:"36px",height:"36px",borderRadius:"50%",background:"transparent",border:"none",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"14px"}}>
+                        <div style={{width:"36px",height:"36px",borderRadius:"50%",background:"transparent",border:"none",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"14px"}}>
                           {aw.img?<img src={aw.img} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<span>{aw.emoji}</span>}
                         </div>
                         <div>
@@ -1052,7 +1049,7 @@ function CalendarTab({onSelect}) {
                       </div>
                       <div style={{fontSize:"12px",fontWeight:"800",color:"#FFB300",padding:"0 8px"}}>VS</div>
                       <div style={{display:"flex",alignItems:"center",gap:"7px",flex:1,flexDirection:"row-reverse"}}>
-                        <div style={{width:"36px",height:"36px",borderRadius:"50%",background:"transparent",border:"none",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"14px"}}>
+                        <div style={{width:"36px",height:"36px",borderRadius:"50%",background:"transparent",border:"none",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"14px"}}>
                           {hw.img?<img src={hw.img} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<span>{hw.emoji}</span>}
                         </div>
                         <div style={{textAlign:"right"}}>
@@ -1150,7 +1147,7 @@ function App() {
                   background:row.s==="KIA"?"rgba(227,24,55,0.08)":i<2?"rgba(255,255,255,0.02)":"transparent",alignItems:"center"}}>
                   <span style={{fontSize:"13px",fontWeight:"800",color:row.r===1?"#FFD700":row.r===2?"#C0C0C0":row.r===3?"#CD7F32":row.r<=5?"rgba(255,255,255,0.6)":"rgba(255,255,255,0.25)"}}>{row.r}</span>
                   <div style={{display:"flex",alignItems:"center",gap:"7px"}}>
-                    <div style={{width:"24px",height:"24px",borderRadius:"50%",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{T[row.s]?.img?<img src={T[row.s].img} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<span style={{fontSize:"13px"}}>{T[row.s]?.emoji}</span>}</div>
+                    <div style={{width:"24px",height:"24px",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{T[row.s]?.img?<img src={T[row.s].img} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<span style={{fontSize:"13px"}}>{T[row.s]?.emoji}</span>}</div>
                     <span style={{fontSize:"13px",fontWeight:row.s==="KIA"?"800":"600",fontFamily:"'Noto Sans KR',sans-serif",color:row.s==="KIA"?"#ff7070":"rgba(255,255,255,0.85)"}}>{row.name}</span>
                   </div>
                   <span style={{textAlign:"center",fontSize:"10px",color:"rgba(255,255,255,0.3)",fontFamily:"'Noto Sans KR',sans-serif"}}>{row.note}</span>
@@ -1182,7 +1179,7 @@ function App() {
                   background:p.team==="KIA"?"rgba(227,24,55,0.08)":"rgba(255,255,255,0.04)",
                   border:`1px solid ${p.team==="KIA"?"rgba(227,24,55,0.28)":"rgba(255,255,255,0.07)"}`,
                   borderRadius:"13px",padding:"13px 15px",gap:"12px"}}>
-                  <div style={{width:"32px",height:"32px",borderRadius:"50%",overflow:"hidden",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{T[p.team]?.img?<img src={T[p.team].img} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<span style={{fontSize:"18px"}}>{T[p.team]?.emoji}</span>}</div>
+                  <div style={{width:"32px",height:"32px",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{T[p.team]?.img?<img src={T[p.team].img} style={{width:"100%",height:"100%",objectFit:"cover"}}/>:<span style={{fontSize:"18px"}}>{T[p.team]?.emoji}</span>}</div>
                   <div style={{flex:1}}>
                     <div style={{display:"flex",alignItems:"center",gap:"5px"}}>
                       <span style={{fontSize:"14px",fontWeight:"800",fontFamily:"'Noto Sans KR',sans-serif"}}>{p.name}</span>
@@ -1226,7 +1223,7 @@ function App() {
             <span style={{fontSize:"10px",fontWeight:tab===t.id?"700":"400",fontFamily:"'Noto Sans KR',sans-serif"}}>
               {t.id==="calendar"?"일정":t.id==="standings"?"순위":"주목"}
             </span>
-            {tab===t.id&&<div style={{width:"4px",height:"4px",borderRadius:"50%",background:"#E31837",marginTop:"1px"}}/>}
+            
           </button>
         ))}
       </div>
