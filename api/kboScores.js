@@ -22,95 +22,70 @@ export default async function handler(req, res) {
     return name;
   };
 
-  const attempts = [];
-
-  // 1차: 스포츠플래시 API
   try {
-    const url = `https://sports.daum.net/sports/api/game/dayschedule.json?type=baseball&leagueCode=kbo&dateStr=${dateStr}`;
+    // 네이버 스포츠 KBO 일정 페이지 스크래핑
+    const url = `https://m.sports.naver.com/kbaseball/schedule/index?date=${dateStr}`;
     const r = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15',
-        'Referer': 'https://sports.daum.net/schedule/kbo',
-        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 13; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml',
+        'Accept-Language': 'ko-KR,ko;q=0.9',
       }
     });
-    const text = await r.text();
-    attempts.push({ url, status: r.status, preview: text.substring(0, 150) });
 
-    if (r.ok) {
-      const data = JSON.parse(text);
-      const list = data?.schedule || data?.games || data?.data || [];
-      if (list.length > 0) {
-        const games = list.map(g => {
-          const sc = String(g.statusCode || g.gameStatus || g.status || '');
-          let status = 'SCHEDULED';
-          if (['1','PLAY','live'].includes(sc)) status = 'LIVE';
-          else if (['2','END','done','result'].includes(sc)) status = 'FINAL';
-          return {
-            date: `${yyyy}-${mm}-${dd}`,
-            time: (g.startTime || g.gameTime || '').substring(0, 5),
-            away: mapTeam(g.awayTeamName || g.awayTeam || ''),
-            home: mapTeam(g.homeTeamName || g.homeTeam || ''),
-            stad: g.venueName || g.stadium || '',
-            status,
-            awayScore: g.awayScore ?? null,
-            homeScore: g.homeScore ?? null,
-            awayInnings: Array(9).fill(-1),
-            homeInnings: Array(9).fill(-1),
-            gameId: g.gameCode || g.gameId || '',
-          };
-        });
-        return res.status(200).json({ games, date: dateStr, total: games.length, src: 'daum' });
-      }
+    const html = await r.text();
+
+    // __NEXT_DATA__ 안에 경기 데이터가 JSON으로 들어있음
+    const match = html.match(/<script id="__NEXT_DATA__" type="application\/json">(.+?)<\/script>/s);
+    if (!match) {
+      return res.status(200).json({ games: [], date: dateStr, error: '__NEXT_DATA__ 없음', preview: html.substring(0, 300) });
     }
-  } catch(e) { attempts.push({ src: 'daum', error: e.message }); }
 
-  // 2차: 스포츠서울 API
-  try {
-    const url = `https://api.sportsseoul.com/kbo/schedule?date=${yyyy}-${mm}-${dd}`;
-    const r = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15',
-        'Accept': 'application/json',
-      }
-    });
-    const text = await r.text();
-    attempts.push({ url, status: r.status, preview: text.substring(0, 150) });
-    if (r.ok) {
-      const data = JSON.parse(text);
-      const list = data?.data || data?.games || [];
-      if (list.length > 0) {
-        const games = list.map(g => ({
-          date: `${yyyy}-${mm}-${dd}`,
-          time: (g.startTime || '').substring(0, 5),
-          away: mapTeam(g.awayTeam || ''),
-          home: mapTeam(g.homeTeam || ''),
-          stad: g.stadium || '',
-          status: 'SCHEDULED',
-          awayScore: g.awayScore ?? null,
-          homeScore: g.homeScore ?? null,
-          awayInnings: Array(9).fill(-1),
-          homeInnings: Array(9).fill(-1),
-          gameId: g.gameId || '',
-        }));
-        return res.status(200).json({ games, date: dateStr, total: games.length, src: 'sportsseoul' });
-      }
+    const nextData = JSON.parse(match[1]);
+
+    // 데이터 경로 탐색
+    const props = nextData?.props?.pageProps;
+    const rawGames =
+      props?.scheduleData?.games ||
+      props?.games ||
+      props?.data?.games ||
+      nextData?.props?.initialState?.schedule?.games ||
+      [];
+
+    if (!rawGames.length) {
+      // 경로 디버그용
+      const keys = Object.keys(props || {});
+      return res.status(200).json({ games: [], date: dateStr, error: '경기 데이터 없음', keys, today: `${yyyy}-${mm}-${dd}` });
     }
-  } catch(e) { attempts.push({ src: 'sportsseoul', error: e.message }); }
 
-  // 3차: statiz API
-  try {
-    const url = `https://www.statiz.co.kr/api/schedule?date=${yyyy}-${mm}-${dd}`;
-    const r = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15',
-        'Accept': 'application/json',
-        'Referer': 'https://www.statiz.co.kr/',
-      }
+    const games = rawGames.map(g => {
+      const sc = String(g.statusCode || g.gameStatusCode || g.status || '');
+      let status = 'SCHEDULED';
+      if (['1','LIVE'].includes(sc)) status = 'LIVE';
+      else if (['2','RESULT','FINAL'].includes(sc)) status = 'FINAL';
+
+      const ai = g.awayScoreList || g.awayInnings || [];
+      const hi = g.homeScoreList || g.homeInnings || [];
+
+      return {
+        date: `${yyyy}-${mm}-${dd}`,
+        time: (g.gameTime || g.startTime || '').substring(0, 5),
+        away: mapTeam(g.awayTeamName || g.awayTeam || ''),
+        home: mapTeam(g.homeTeamName || g.homeTeam || ''),
+        stad: g.stadiumName || g.stadium || '',
+        status,
+        awayScore: g.awayScore ?? null,
+        homeScore: g.homeScore ?? null,
+        awayInnings: ai.length ? ai.map(Number) : Array(9).fill(-1),
+        homeInnings: hi.length ? hi.map(Number) : Array(9).fill(-1),
+        inning: g.currentInning || null,
+        gameId: g.gameId || g.id || '',
+      };
     });
-    const text = await r.text();
-    attempts.push({ url, status: r.status, preview: text.substring(0, 150) });
-  } catch(e) { attempts.push({ src: 'statiz', error: e.message }); }
 
-  res.status(200).json({ games: [], date: dateStr, error: '모든 API 실패', debug: attempts });
+    res.status(200).json({ games, date: dateStr, total: games.length });
+
+  } catch(e) {
+    res.status(200).json({ games: [], date: dateStr, error: e.message });
+  }
 }
