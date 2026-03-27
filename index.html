@@ -792,7 +792,7 @@ function renderCal(d) {
     cells += `<div class="cal-cell${isSel?' sel':''}${isPast?' past':''}" onclick="selDate('${ds}')">
       <div class="cal-day${isSel?' sel':''}${isToday?' today':''}${dow===5?' sat':dow===6?' sun':''}" style="color:${dayColor}">${i}</div>
       ${kg&&oppKey?`<div style="display:flex;flex-direction:column;align-items:center;gap:1px">
-        ${isHome?`<div class="home-badge">홈</div>`:''}
+        <div style="height:11px;display:flex;align-items:center;justify-content:center">${isHome?`<div class="home-badge">홈</div>`:''}</div>
         ${logo(oppKey,22)}
         <div style="font-size:7px;color:${d.sub};font-weight:600;line-height:1">${kg.time}</div>
       </div>`:''}
@@ -935,6 +935,14 @@ function renderModal(d) {
   const lt = state.modalLt;
   const cur = lt==='away'?(g.lineup?.away||[]):(g.lineup?.home||[]);
   const ct = lt==='away'?aw:hw;
+  // KIA 항상 왼쪽
+  const kiaHome = g.home==='KIA';
+  const lTeam = kiaHome?g.home:g.away;
+  const rTeam = kiaHome?g.away:g.home;
+  const lLabel = kiaHome?'HOME':'AWAY';
+  const rLabel = kiaHome?'AWAY':'HOME';
+  const lScore = kiaHome?(g.homeScore??0):(g.awayScore??0);
+  const rScore = kiaHome?(g.awayScore??0):(g.homeScore??0);
   const memo = localStorage.getItem(`m_${g.date}_${g.away}_${g.home}`)||'';
 
   document.getElementById('modal-content').innerHTML = `
@@ -948,25 +956,25 @@ function renderModal(d) {
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between">
         <div style="display:flex;align-items:center;gap:10px;flex:1">
-          ${logo(g.away,48)}
+          ${logo(lTeam,48)}
           <div>
-            <div style="font-size:13px;font-weight:800;color:${g.away==='KIA'?'#ff6b6b':d.text}">${aw.name}</div>
-            <div style="font-size:10px;color:${d.sub}">AWAY</div>
+            <div style="font-size:13px;font-weight:800;color:${lTeam==='KIA'?'#ff6b6b':d.text}">${T[lTeam]?.name||lTeam}</div>
+            <div style="font-size:10px;color:${d.sub}">${lLabel}</div>
           </div>
         </div>
         <div style="text-align:center;padding:0 8px">
           ${isSch?`<div style="font-size:18px;font-weight:800;color:#FFB300">VS</div>`
           :`<div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:28px;font-weight:900;color:${d.text}">${g.awayScore??0}</span>
+            <span style="font-size:28px;font-weight:900;color:${d.text}">${lScore}</span>
             <span style="color:${d.sub}">:</span>
-            <span style="font-size:28px;font-weight:900;color:${d.text}">${g.homeScore??0}</span>
+            <span style="font-size:28px;font-weight:900;color:${d.text}">${rScore}</span>
           </div>`}
         </div>
         <div style="display:flex;align-items:center;gap:10px;flex:1;flex-direction:row-reverse">
-          ${logo(g.home,48)}
+          ${logo(rTeam,48)}
           <div style="text-align:right">
-            <div style="font-size:13px;font-weight:800;color:${g.home==='KIA'?'#ff6b6b':d.text}">${hw.name}</div>
-            <div style="font-size:10px;color:${d.sub}">HOME</div>
+            <div style="font-size:13px;font-weight:800;color:${rTeam==='KIA'?'#ff6b6b':d.text}">${T[rTeam]?.name||rTeam}</div>
+            <div style="font-size:10px;color:${d.sub}">${rLabel}</div>
           </div>
         </div>
       </div>
@@ -1089,4 +1097,3 @@ render();
 </script>
 </body>
 </html>
-
