@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -37,9 +38,8 @@
     .card.kia{background:rgba(227,24,55,0.08);border-color:rgba(227,24,55,0.25)}
     .cal-grid{display:grid;grid-template-columns:repeat(7,1fr)}
     .cal-sticky{position:sticky;top:0;z-index:10;background:inherit;}
-    .cal-wrap{transition:none}
     .cal-week-only .cal-grid#cal-grid-body .cal-cell:not(.current-week){display:none}
-    .cal-cell{min-height:68px;padding:3px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
+    .cal-cell{min-height:68px;padding:3px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;transition:opacity 0.25s ease,max-height 0.3s ease,padding 0.3s ease,min-height 0.3s ease}
     .cal-cell.sel{background:rgba(227,24,55,0.15)}
     .cal-cell.past{opacity:0.4}
     .cal-day{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;margin-top:2px;border:2px solid transparent}
@@ -775,7 +775,13 @@ const D = () => state.dark ? {
   bg:'rgba(0,0,0,0.03)',bgB:'rgba(0,0,0,0.08)',
 };
 
-function render() { const d=D(); renderHeader(d); renderNav(); renderContent(d); }
+function render() {
+  const d=D();
+  renderHeader(d);
+  renderNav();
+  renderContent(d);
+  document.dispatchEvent(new Event('renderDone'));
+}
 
 function renderHeader(d) {
   document.getElementById('header').innerHTML = `
@@ -986,13 +992,13 @@ function renderCalSplit(d) {
       </div>`;
     })()}
     ${countdownHtml}
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-      <div style="display:flex;align-items:center;gap:4px;flex:1;justify-content:center">
-        <button onclick="prevMo()" style="color:#E31837;font-size:22px;padding:4px 8px;line-height:1">‹</button>
+    <div style="position:relative;display:flex;align-items:center;justify-content:center;margin-bottom:12px;height:36px">
+      <div style="position:absolute;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:4px;pointer-events:none">
+        <button onclick="prevMo()" style="color:#E31837;font-size:22px;padding:4px 8px;line-height:1;pointer-events:auto">‹</button>
         <div style="font-size:17px;font-weight:900;min-width:120px;text-align:center;color:${d.text}">${yr}년 ${mo}월</div>
-        <button onclick="nextMo()" style="color:#E31837;font-size:22px;padding:4px 8px;line-height:1">›</button>
+        <button onclick="nextMo()" style="color:#E31837;font-size:22px;padding:4px 8px;line-height:1;pointer-events:auto">›</button>
       </div>
-      <button onclick="goToday()" style="font-size:11px;font-weight:700;color:#E31837;border:1.5px solid #E31837;border-radius:8px;padding:4px 10px;white-space:nowrap">오늘</button>
+      <button onclick="goToday()" style="position:absolute;right:0;font-size:11px;font-weight:700;color:#E31837;border:1.5px solid #E31837;border-radius:8px;padding:4px 10px;white-space:nowrap">오늘</button>
     </div>
     <div id="cal-wrap" style="background:${d.bg};border:1px solid ${d.bgB};border-radius:14px;overflow:hidden;margin-bottom:16px">
       <div class="cal-grid" style="border-bottom:1px solid ${d.bgB};background:${d.bg}">
@@ -1012,7 +1018,9 @@ function renderCalSplit(d) {
 
 function renderCal(d) {
   const {calHtml, listHtml} = renderCalSplit(d);
-  return calHtml + listHtml;
+  return `<div id="cal-section">${calHtml}</div>
+    <hr id="cal-divider" style="display:none;border:none;border-top:1.5px solid rgba(127,127,127,0.2);margin:0 0 12px"/>
+    <div id="list-section">${listHtml}</div>`;
 }
 
 function renderBaseballRecord(d) {
@@ -1173,7 +1181,7 @@ function renderFavs(d) {
     html += '<div style="display:flex;align-items:center;gap:6px">';
     if(isLive) html += '<span style="font-size:9px;background:#E31837;color:#fff;border-radius:4px;padding:1px 5px;font-weight:700">LIVE</span>';
     if(isFinal) html += '<span style="font-size:9px;background:rgba(0,0,0,0.2);color:'+d.text+';border-radius:4px;padding:1px 5px;font-weight:700">종료</span>';
-    html += '<button onclick="event.stopPropagation();toggleFav(g)" style="font-size:16px">⭐</button>';
+
     html += '</div></div>';
     html += '<div style="display:flex;align-items:center;justify-content:space-between">';
     html += '<div style="display:flex;align-items:center;gap:6px;flex:1">'+logo(lKey,30)+'<span style="font-size:12px;font-weight:700;color:'+(lKey==='KIA'?'#ff6b6b':d.text)+'">'+(T[lKey]?T[lKey].name:lKey)+'</span></div>';
@@ -1257,6 +1265,7 @@ function renderMyPage(d) {
   const sections = [
     {id:'rank', label:'📊 순위',     fn: renderStand},
     {id:'fav',  label:'⭐ 즐겨찾기', fn: renderFavs},
+    {id:'memo', label:'📝 메모',     fn: renderMemos},
   ];
 
   // 프로필 섹션
@@ -1584,8 +1593,8 @@ function renderModal(d) {
     if(!input||!input.files||!input.files[0]) return;
     const file = input.files[0];
     // 파일 크기 제한 2MB (localStorage 용량 초과 방지)
-    if(file.size > 2*1024*1024) {
-      alert('사진 크기가 너무 커요. 2MB 이하의 사진을 선택해 주세요.');
+    if(file.size > 5*1024*1024) {
+      alert('사진 크기가 너무 커요. 5MB 이하의 사진을 선택해 주세요.');
       return;
     }
     const reader = new FileReader();
@@ -1662,12 +1671,30 @@ function openModal(idx,date) {
   const overlay=document.getElementById('modal-overlay');
   const box=document.getElementById('modal-box');
   box.classList.remove('closing'); overlay.classList.add('open');
+  box.scrollTop = 0;
   renderModal(D()); history.pushState({modal:true},'');
   document.body.style.overflow='hidden';
-  let ty=null;
-  box.ontouchstart=e=>{ty=e.touches[0].clientY;};
-  box.ontouchmove=e=>{if(ty!==null&&e.touches[0].clientY-ty>0)e.preventDefault();};
-  box.ontouchend=e=>{if(ty!==null&&e.changedTouches[0].clientY-ty>60)closeModal();ty=null;};
+  let ty=null, txStart=0, canSwipeClose=false;
+  box.ontouchstart=e=>{
+    ty=e.touches[0].clientY;
+    txStart=e.touches[0].clientX;
+    // 최상단에서만 스와이프 닫기 가능
+    canSwipeClose = (box.scrollTop <= 0);
+  };
+  box.ontouchmove=e=>{
+    if(ty===null) return;
+    const dy=e.touches[0].clientY-ty;
+    const dx=Math.abs(e.touches[0].clientX-txStart);
+    // 세로 스와이프이고 최상단에서 아래로 내릴 때만 preventDefault (스크롤 막기)
+    if(canSwipeClose && dy>0 && dx<30) e.preventDefault();
+  };
+  box.ontouchend=e=>{
+    if(ty===null) return;
+    const dy=e.changedTouches[0].clientY-ty;
+    // 최상단에서 60px 이상 아래로 스와이프 시에만 닫기
+    if(canSwipeClose && dy>60) closeModal();
+    ty=null;
+  };
 }
 
 function closeModal() {
@@ -1688,6 +1715,7 @@ document.getElementById('modal-overlay').addEventListener('click',e=>{
 window.addEventListener('popstate',()=>{if(state.modalGame)closeModal();});
 
 setInterval(()=>{state.clock=new Date();render();},1000);
+
 
 
 
