@@ -23,69 +23,79 @@ export default async function handler(req, res) {
   };
 
   try {
-    // 네이버 스포츠 KBO 일정 페이지 스크래핑
-    const url = `https://m.sports.naver.com/kbaseball/schedule/index?date=${dateStr}`;
+    // 네이버 스포츠 API - 실제 데이터 엔드포인트
+    const url = `https://api-gw.sports.naver.com/schedule/games?fields=basic%2Cschedule%2Cbaseball%2CmanualRelayUrl&upperCategoryId=kbaseball&categoryIds=kbo&fromDate=${dateStr}&toDate=${dateStr}&size=100&_=${Date.now()}`;
+
     const r = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Linux; Android 13; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml',
-        'Accept-Language': 'ko-KR,ko;q=0.9',
+        'User-Agent': 'com.naver.sports/4.0.0 (Android; 13)',
+        'Accept': 'application/json',
+        'Accept-Language': 'ko-KR',
+        'x-naver-client-id': 'sports',
+        'x-naver-client-version': '4.0.0',
       }
     });
 
-    const html = await r.text();
+    const text = await r.text();
 
-    // __NEXT_DATA__ 안에 경기 데이터가 JSON으로 들어있음
-    const match = html.match(/<script id="__NEXT_DATA__" type="application\/json">(.+?)<\/script>/s);
-    if (!match) {
-      return res.status(200).json({ games: [], date: dateStr, error: '__NEXT_DATA__ 없음', preview: html.substring(0, 300) });
+    if (!r.ok) {
+      // 앱 UA 실패시 웹 UA로 재시도
+      const r2 = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/122.0.0.0 Mobile Safari/537.36',
+          'Referer': 'https://m.sports.naver.com/',
+          'Accept': 'application/json',
+        }
+      });
+      const text2 = await r2.text();
+      if (!r2.ok) {
+        return res.status(200).json({ games: [], date: dateStr, error: `HTTP ${r2.status}`, raw: text2.substring(0,200) });
+      }
+      const data2 = JSON.parse(text2);
+      return processAndRespond(data2, yyyy, mm, dd, dateStr, mapTeam, res);
     }
 
-    const nextData = JSON.parse(match[1]);
-
-    // 데이터 경로 탐색
-    const props = nextData?.props?.pageProps;
-    const rawGames =
-      props?.scheduleData?.games ||
-      props?.games ||
-      props?.data?.games ||
-      nextData?.props?.initialState?.schedule?.games ||
-      [];
-
-    if (!rawGames.length) {
-      // 경로 디버그용
-      const keys = Object.keys(props || {});
-      return res.status(200).json({ games: [], date: dateStr, error: '경기 데이터 없음', keys, today: `${yyyy}-${mm}-${dd}` });
-    }
-
-    const games = rawGames.map(g => {
-      const sc = String(g.statusCode || g.gameStatusCode || g.status || '');
-      let status = 'SCHEDULED';
-      if (['1','LIVE'].includes(sc)) status = 'LIVE';
-      else if (['2','RESULT','FINAL'].includes(sc)) status = 'FINAL';
-
-      const ai = g.awayScoreList || g.awayInnings || [];
-      const hi = g.homeScoreList || g.homeInnings || [];
-
-      return {
-        date: `${yyyy}-${mm}-${dd}`,
-        time: (g.gameTime || g.startTime || '').substring(0, 5),
-        away: mapTeam(g.awayTeamName || g.awayTeam || ''),
-        home: mapTeam(g.homeTeamName || g.homeTeam || ''),
-        stad: g.stadiumName || g.stadium || '',
-        status,
-        awayScore: g.awayScore ?? null,
-        homeScore: g.homeScore ?? null,
-        awayInnings: ai.length ? ai.map(Number) : Array(9).fill(-1),
-        homeInnings: hi.length ? hi.map(Number) : Array(9).fill(-1),
-        inning: g.currentInning || null,
-        gameId: g.gameId || g.id || '',
-      };
-    });
-
-    res.status(200).json({ games, date: dateStr, total: games.length });
+    const data = JSON.parse(text);
+    return processAndRespond(data, yyyy, mm, dd, dateStr, mapTeam, res);
 
   } catch(e) {
     res.status(200).json({ games: [], date: dateStr, error: e.message });
   }
+}
+
+function processAndRespond(data, yyyy, mm, dd, dateStr, mapTeam, res) {
+  const rawGames = data?.result?.games || data?.games || [];
+
+  if (!rawGames.length) {
+    return res.status(200).json({ games: [], date: dateStr, note: '오늘 경기 없음 (개막 전 또는 휴식일)', keys: Object.keys(data?.result || {}) });
+  }
+
+  const games = rawGames.map(g => {
+    const base = g.schedule || g;
+    const baseball = g.baseball || {};
+    const sc = String(base.statusCode || base.gameStatusCode || '');
+    let status = 'SCHEDULED';
+    if (['1','LIVE'].includes(sc)) status = 'LIVE';
+    else if (['2','RESULT'].includes(sc)) status = 'FINAL';
+
+    const ai = baseball.awayScoreList || [];
+    const hi = baseball.homeScoreList || [];
+
+    return {
+      date: `${yyyy}-${mm}-${dd}`,
+      time: (base.gameTime || '').substring(0, 5),
+      away: mapTeam(base.awayTeamName || base.awayTeam || ''),
+      home: mapTeam(base.homeTeamName || base.homeTeam || ''),
+      stad: base.stadiumName || '',
+      status,
+      awayScore: base.awayScore ?? null,
+      homeScore: base.homeScore ?? null,
+      awayInnings: ai.length ? ai.map(Number) : Array(9).fill(-1),
+      homeInnings: hi.length ? hi.map(Number) : Array(9).fill(-1),
+      inning: baseball.currentInning || null,
+      gameId: base.gameId || '',
+    };
+  });
+
+  return res.status(200).json({ games, date: dateStr, total: games.length });
 }
