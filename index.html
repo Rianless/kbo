@@ -5,40 +5,78 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-  <meta name="apple-mobile-web-app-title" content="KBO 🐯"/>
   <meta name="theme-color" content="#E8ECF1" id="theme-meta"/>
   <title>KBO 대시보드 🐯</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;800;900&display=swap" rel="stylesheet"/>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Noto Sans KR',sans-serif;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+    body{background:#E8ECF1;color:#0A0E1A;font-family:'Noto Sans KR',sans-serif;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+    body.dark{background:#0A0E1A;color:#fff}
+    button{cursor:pointer;border:none;outline:none;background:none;-webkit-appearance:none}
+    textarea{outline:none;font-family:'Noto Sans KR',sans-serif}
+    ::-webkit-scrollbar{display:none}
+    .fade{animation:fadeIn 0.3s}
     @keyframes fadeIn{from{opacity:0}to{opacity:1}}
     @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
     @keyframes slideDown{from{transform:translateY(0)}to{transform:translateY(100%)}}
-    button{cursor:pointer;border:none;outline:none;-webkit-appearance:none}
-    textarea,input{outline:none}
-    ::-webkit-scrollbar{display:none}
+    #modal-overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.5);backdrop-filter:blur(6px);display:none;align-items:flex-end;justify-content:center;animation:fadeIn 0.2s}
+    #modal-overlay.open{display:flex}
+    #modal-box{width:100%;max-width:520px;background:#fff;border-radius:22px 22px 0 0;max-height:92vh;overflow-y:auto;padding-bottom:28px;animation:slideUp 0.3s ease}
+    #modal-box.closing{animation:slideDown 0.28s ease forwards}
+    body.dark #modal-box{background:#0F1525}
+    .nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid rgba(0,0,0,0.1);display:flex;padding-bottom:6px;z-index:50}
+    body.dark .nav{background:#111827;border-color:rgba(255,255,255,0.08)}
+    .nav button{flex:1;padding:4px 0;display:flex;flex-direction:column;align-items:center;gap:3px;color:rgba(0,0,0,0.4);font-size:9px;font-family:'Noto Sans KR',sans-serif}
+    body.dark .nav button{color:rgba(255,255,255,0.35)}
+    .nav button.active{color:#E31837}
+    .nav button span.icon{font-size:18px}
+    .tab{display:none;animation:fadeIn 0.3s}
+    .tab.active{display:block}
+    .card{background:#fff;border:1px solid rgba(0,0,0,0.1);border-radius:14px;padding:12px 14px;cursor:pointer;margin-bottom:8px}
+    body.dark .card{background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07)}
+    .card.kia{background:rgba(227,24,55,0.08);border-color:rgba(227,24,55,0.25)}
+    .cal-grid{display:grid;grid-template-columns:repeat(7,1fr)}
+    .cal-cell{min-height:68px;padding:3px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
+    .cal-cell.sel{background:rgba(227,24,55,0.15)}
+    .cal-cell.past{opacity:0.4}
+    .cal-day{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;margin-top:2px;border:2px solid transparent}
+    .cal-day.sel{color:#E31837;border-color:#E31837}
+    .cal-day.today{background:rgba(0,0,0,0.12)}
+    body.dark .cal-day.today{background:rgba(255,255,255,0.18)}
+    .cal-day.sat{color:#4FC3F7}
+    .cal-day.sun{color:#EF5350}
+    .home-badge{font-size:7px;font-weight:800;color:#E31837;background:rgba(227,24,55,0.12);border-radius:3px;padding:0 3px;line-height:1.4}
+    .inn-table{width:100%;border-collapse:collapse;font-size:12px;min-width:300px}
+    .inn-table td{text-align:center;padding:6px 3px}
+    .inn-table .team-cell{text-align:left;padding:8px 6px;font-size:11px;font-weight:700}
+    .tag-kia{font-size:9px;background:#E31837;color:#fff;border-radius:4px;padding:1px 5px;font-weight:700}
+    .tag-lu{font-size:9px;background:rgba(0,230,118,0.15);color:#00E676;border-radius:4px;padding:1px 5px;font-weight:700;border:1px solid rgba(0,230,118,0.3)}
   </style>
 </head>
 <body>
-<div id="root"></div>
-<script type="text/babel">
-const {useState,useEffect,useRef} = React;
+<div id="app">
+  <div id="header"></div>
+  <div id="content" style="max-width:600px;margin:0 auto;padding:14px 16px 70px"></div>
+  <nav class="nav" id="nav"></nav>
+</div>
+<div id="modal-overlay">
+  <div id="modal-box">
+    <div id="modal-content"></div>
+  </div>
+</div>
 
+<script>
 const T = {
-  KIA: {name:"KIA 타이거즈", color:"#E31837", img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/tigers.png"},
-  삼성: {name:"삼성 라이온즈", color:"#1E4489", img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/lions.png"},
-  LG:  {name:"LG 트윈스",    color:"#C30452", img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/twins.png"},
-  두산: {name:"두산 베어스",  color:"#1B2A6B", img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/bears.png"},
-  KT:  {name:"KT 위즈",      color:"#444",    img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/wiz.png"},
-  SSG: {name:"SSG 랜더스",   color:"#CE0E2D", img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/landers.png"},
-  롯데: {name:"롯데 자이언츠",color:"#002561", img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/giants.png"},
-  한화: {name:"한화 이글스",  color:"#FF6600", img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/eagles.png"},
-  NC:  {name:"NC 다이노스",   color:"#071D3B", img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/dinos.png"},
-  키움: {name:"키움 히어로즈",color:"#570514", img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/kiwoom.png"},
+  KIA:{name:"KIA 타이거즈",color:"#E31837",img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/tigers.png"},
+  삼성:{name:"삼성 라이온즈",color:"#1E4489",img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/lions.png"},
+  LG:{name:"LG 트윈스",color:"#C30452",img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/twins.png"},
+  두산:{name:"두산 베어스",color:"#1B2A6B",img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/bears.png"},
+  KT:{name:"KT 위즈",color:"#444",img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/wiz.png"},
+  SSG:{name:"SSG 랜더스",color:"#CE0E2D",img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/landers.png"},
+  롯데:{name:"롯데 자이언츠",color:"#002561",img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/giants.png"},
+  한화:{name:"한화 이글스",color:"#FF6600",img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/eagles.png"},
+  NC:{name:"NC 다이노스",color:"#071D3B",img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/dinos.png"},
+  키움:{name:"키움 히어로즈",color:"#570514",img:"https://raw.githubusercontent.com/Rianless/kbo/main/images/kiwoom.png"},
 };
 
 const SCH = [
@@ -187,7 +225,6 @@ const SCH = [
   {date:"2026-04-30",away:"LG",home:"KT",stad:"수원 KT위즈파크",time:"18:30"},
   {date:"2026-04-30",away:"SSG",home:"한화",stad:"대전 한화생명이글스파크",time:"18:30"},
   {date:"2026-04-30",away:"키움",home:"롯데",stad:"사직",time:"18:30"},
-  // ── 5월 ──
   {date:"2026-05-01",away:"KT",home:"KIA",stad:"광주 기아챔피언스필드",time:"18:30"},
   {date:"2026-05-01",away:"NC",home:"LG",stad:"잠실",time:"18:30"},
   {date:"2026-05-01",away:"두산",home:"키움",stad:"고척 스카이돔",time:"18:30"},
@@ -323,7 +360,6 @@ const SCH = [
   {date:"2026-05-31",away:"SSG",home:"한화",stad:"대전 한화생명이글스파크",time:"14:00"},
   {date:"2026-05-31",away:"롯데",home:"NC",stad:"창원 NC파크",time:"14:00"},
   {date:"2026-05-31",away:"두산",home:"삼성",stad:"대구 삼성라이온즈파크",time:"14:00"},
-  // ── 6월 ──
   {date:"2026-06-02",away:"NC",home:"KIA",stad:"광주 기아챔피언스필드",time:"18:30"},
   {date:"2026-06-02",away:"한화",home:"두산",stad:"잠실",time:"18:30"},
   {date:"2026-06-02",away:"키움",home:"삼성",stad:"대구 삼성라이온즈파크",time:"18:30"},
@@ -449,7 +485,6 @@ const SCH = [
   {date:"2026-06-30",away:"LG",home:"키움",stad:"고척 스카이돔",time:"18:30"},
   {date:"2026-06-30",away:"KT",home:"한화",stad:"대전 한화생명이글스파크",time:"18:30"},
   {date:"2026-06-30",away:"삼성",home:"NC",stad:"창원 NC파크",time:"18:30"},
-  // ── 7월 ──
   {date:"2026-07-01",away:"SSG",home:"KIA",stad:"광주 기아챔피언스필드",time:"18:30"},
   {date:"2026-07-01",away:"롯데",home:"두산",stad:"잠실",time:"18:30"},
   {date:"2026-07-01",away:"LG",home:"키움",stad:"고척 스카이돔",time:"18:30"},
@@ -545,7 +580,6 @@ const SCH = [
   {date:"2026-07-31",away:"SSG",home:"키움",stad:"고척 스카이돔",time:"18:30"},
   {date:"2026-07-31",away:"한화",home:"KT",stad:"수원 KT위즈파크",time:"18:30"},
   {date:"2026-07-31",away:"삼성",home:"롯데",stad:"사직",time:"18:30"},
-  // ── 8월 ──
   {date:"2026-08-01",away:"KIA",home:"NC",stad:"창원 NC파크",time:"18:00"},
   {date:"2026-08-01",away:"LG",home:"두산",stad:"잠실",time:"18:00"},
   {date:"2026-08-01",away:"SSG",home:"키움",stad:"고척 스카이돔",time:"18:00"},
@@ -646,460 +680,413 @@ const STAND=[
   {r:10,s:"키움",name:"키움 히어로즈",note:""},
 ];
 
-const LEAD={
-  batting:[{name:"김도영",team:"KIA",label:"전시즌 MVP"},{name:"문보경",team:"LG",label:"국가대표"},{name:"안현민",team:"KT",label:"신인왕"}],
-  hr:[{name:"노시환",team:"한화",label:"홈런왕 후보"},{name:"김도영",team:"KIA",label:"멀티툴"},{name:"채은성",team:"LG",label:"클러치"}],
-  era:[{name:"양현종",team:"KIA",label:"KIA 에이스"},{name:"원태인",team:"삼성",label:"삼성 에이스"},{name:"류현진",team:"한화",label:"복귀 시즌"}],
+// ── 상태 ──
+let state = {
+  tab: 'cal',
+  dark: false,
+  yr: 2026, mo: 3,
+  sel: '2026-03-28',
+  lcat: 'batting',
+  modalGame: null,
+  modalLt: 'away',
+  clock: new Date(),
 };
 
-const PC={CF:{x:50,y:8},LF:{x:18,y:20},RF:{x:82,y:20},SS:{x:34,y:44},"2B":{x:64,y:44},P:{x:50,y:54},"3B":{x:18,y:62},"1B":{x:82,y:62},C:{x:50,y:80},DH:{x:10,y:80}};
-const pad=n=>String(n).padStart(2,"0");
-const dim=(y,m)=>new Date(y,m,0).getDate();
-const fdow=(y,m)=>{const d=new Date(y,m-1,1).getDay();return d===0?6:d-1;};
+const pad = n => String(n).padStart(2,'0');
+const dim = (y,m) => new Date(y,m,0).getDate();
+const fdow = (y,m) => { const d=new Date(y,m-1,1).getDay(); return d===0?6:d-1; };
+const logo = (team,size) => {
+  const t = T[team];
+  if(!t) return '';
+  return `<img src="${t.img}" style="width:${size}px;height:${size}px;object-fit:contain" onerror="this.style.display='none'">`;
+};
+const D = () => state.dark ? {
+  text:'#fff', sub:'rgba(255,255,255,0.4)', muted:'rgba(255,255,255,0.15)',
+  card:'rgba(255,255,255,0.04)', cardB:'rgba(255,255,255,0.07)',
+  bg:'rgba(255,255,255,0.03)', bgB:'rgba(255,255,255,0.08)',
+} : {
+  text:'#0A0E1A', sub:'rgba(0,0,0,0.5)', muted:'rgba(0,0,0,0.2)',
+  card:'#fff', cardB:'rgba(0,0,0,0.1)',
+  bg:'rgba(0,0,0,0.03)', bgB:'rgba(0,0,0,0.08)',
+};
 
-function Logo({team,size=36}){
-  const t=T[team];
-  if(!t) return null;
-  return <img src={t.img} style={{width:size,height:size,objectFit:"contain"}} onError={e=>{e.target.style.display="none";}}/>;
+// ── 렌더 ──
+function render() {
+  const d = D();
+  renderHeader(d);
+  renderNav();
+  renderContent(d);
 }
 
-function Diamond({players,color,dark}){
-  return (
-    <div style={{position:"relative",width:"100%",paddingBottom:"88%"}}>
-      <svg viewBox="0 0 340 300" style={{position:"absolute",inset:0,width:"100%",height:"100%"}}>
-        <path d="M170 260 L30 90 Q170 -20 310 90 Z" fill="rgba(255,255,255,0.03)" stroke={dark?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.06)"} strokeWidth="1"/>
-        <polygon points="170,75 240,150 170,225 100,150" fill="rgba(255,255,255,0.03)" stroke={dark?"rgba(255,255,255,0.15)":"rgba(0,0,0,0.2)"} strokeWidth="1.5"/>
-        {[[170,75],[240,150],[170,225],[100,150]].map(([x,y],i)=>(
-          <rect key={i} x={x-6} y={y-6} width="12" height="12" rx="2"
-            fill={i===3?(dark?"rgba(255,255,255,0.9)":"rgba(0,0,0,0.7)"):(dark?"rgba(255,255,255,0.7)":"rgba(0,0,0,0.5)")}
-            transform={`rotate(45,${x},${y})`}/>
-        ))}
-        <circle cx="170" cy="155" r="6" fill="rgba(180,120,60,0.4)" stroke="rgba(180,120,60,0.5)" strokeWidth="1"/>
-        <line x1="170" y1="225" x2="30" y2="90" stroke="rgba(255,255,255,0.06)" strokeWidth="1" strokeDasharray="4,4"/>
-        <line x1="170" y1="225" x2="310" y2="90" stroke="rgba(255,255,255,0.06)" strokeWidth="1" strokeDasharray="4,4"/>
-      </svg>
-      {players.map((p,i)=>{
-        const pos=PC[p.p]||PC.DH; const isP=p.p==="P";
-        return (
-          <div key={i} style={{position:"absolute",left:`${pos.x}%`,top:`${pos.y}%`,transform:"translate(-50%,-50%)",zIndex:2}}>
-            <div style={{background:isP?`linear-gradient(135deg,${color},${color}bb)`:"rgba(12,18,32,0.93)",border:`1.5px solid ${isP?color:"rgba(255,255,255,0.18)"}`,borderRadius:8,padding:"3px 7px",display:"flex",alignItems:"center",gap:4,whiteSpace:"nowrap",boxShadow:isP?`0 0 10px ${color}55,0 2px 8px rgba(0,0,0,0.5)`:"0 2px 6px rgba(0,0,0,0.5)"}}>
-              <span style={{fontSize:9,fontWeight:900,color:isP?"#fff":color,minWidth:12,textAlign:"center"}}>{p.n}</span>
-              <span style={{fontSize:11,fontWeight:700,color:"#fff"}}>{p.name}</span>
-              <span style={{fontSize:9,color:"rgba(255,255,255,0.4)"}}>{p.p}</span>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function Modal({game,onClose,closeRef,dark,D}){
-  const [lt,setLt]=useState("away");
-  const [closing,setClosing]=useState(false);
-  const [memo,setMemo]=useState(()=>localStorage.getItem(`m_${game.date}_${game.away}_${game.home}`)||"");
-  const [saved,setSaved]=useState(false);
-  const ty=useRef(null);
-
-  const close=()=>{setClosing(true);document.body.style.overflow="";setTimeout(onClose,280);};
-  useEffect(()=>{document.body.style.overflow="hidden";return()=>{document.body.style.overflow="";};},[]);
-  useEffect(()=>{if(closeRef)closeRef.current=close;return()=>{if(closeRef)closeRef.current=null;};},[closing]);
-
-  const ts=e=>{ty.current=e.touches[0].clientY;};
-  const tm=e=>{if(ty.current===null)return;if(e.touches[0].clientY-ty.current>0)e.preventDefault();};
-  const te=e=>{if(ty.current===null)return;const dy=e.changedTouches[0].clientY-ty.current;ty.current=null;if(dy>60)close();};
-
-  const saveMemo=v=>{setMemo(v);localStorage.setItem(`m_${game.date}_${game.away}_${game.home}`,v);setSaved(true);setTimeout(()=>setSaved(false),1500);};
-
-  const aw=T[game.away]||{name:game.away,color:"#888"};
-  const hw=T[game.home]||{name:game.home,color:"#888"};
-  const isSch=!game.status||game.status==="BEFORE";
-  const hasLU=!!game.lineup;
-  const cur=lt==="away"?(game.lineup?.away||[]):(game.lineup?.home||[]);
-  const ct=lt==="away"?aw:hw;
-
-  return (
-    <div style={{position:"fixed",inset:0,zIndex:100,background:dark?"rgba(0,0,0,0.8)":"rgba(0,0,0,0.4)",backdropFilter:"blur(6px)",display:"flex",alignItems:"flex-end",justifyContent:"center",animation:"fadeIn 0.2s"}} onClick={close}>
-      <div style={{width:"100%",maxWidth:520,background:dark?"#0F1525":"#fff",borderRadius:"22px 22px 0 0",maxHeight:"92vh",overflowY:"auto",paddingBottom:28,animation:closing?"slideDown 0.28s ease forwards":"slideUp 0.3s ease"}} onClick={e=>e.stopPropagation()} onTouchStart={ts} onTouchMove={tm} onTouchEnd={te}>
-        <div style={{display:"flex",justifyContent:"center",padding:"10px 0 2px"}}>
-          <div style={{width:34,height:4,borderRadius:2,background:dark?"rgba(255,255,255,0.15)":"rgba(0,0,0,0.15)"}}/>
-        </div>
-        <div style={{padding:"10px 18px 14px",borderBottom:`1px solid ${dark?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.08)"}`}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-            <span style={{fontSize:11,fontWeight:700,color:"#FFB300"}}>{game.time} 시작 · 📍 {game.stad}</span>
-            <button onClick={close} style={{background:dark?"rgba(255,255,255,0.08)":"rgba(0,0,0,0.06)",color:dark?"rgba(255,255,255,0.6)":"rgba(0,0,0,0.5)",borderRadius:"50%",width:28,height:28,fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
-          </div>
-          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-            <div style={{display:"flex",alignItems:"center",gap:10,flex:1}}>
-              <div style={{width:48,height:48,display:"flex",alignItems:"center",justifyContent:"center"}}><Logo team={game.away} size={48}/></div>
-              <div>
-                <div style={{fontSize:13,fontWeight:800,color:game.away==="KIA"?"#ff6b6b":D.text}}>{aw.name}</div>
-                <div style={{fontSize:10,color:D.textSub}}>AWAY</div>
-              </div>
-            </div>
-            <div style={{textAlign:"center",padding:"0 8px"}}>
-              {isSch?<div style={{fontSize:18,fontWeight:800,color:"#FFB300"}}>VS</div>
-              :<div style={{display:"flex",alignItems:"center",gap:8}}>
-                <span style={{fontSize:28,fontWeight:900,color:D.text}}>{game.awayScore??0}</span>
-                <span style={{color:D.textSub}}>:</span>
-                <span style={{fontSize:28,fontWeight:900,color:D.text}}>{game.homeScore??0}</span>
-              </div>}
-            </div>
-            <div style={{display:"flex",alignItems:"center",gap:10,flex:1,flexDirection:"row-reverse"}}>
-              <div style={{width:48,height:48,display:"flex",alignItems:"center",justifyContent:"center"}}><Logo team={game.home} size={48}/></div>
-              <div style={{textAlign:"right"}}>
-                <div style={{fontSize:13,fontWeight:800,color:game.home==="KIA"?"#ff6b6b":D.text}}>{hw.name}</div>
-                <div style={{fontSize:10,color:D.textSub}}>HOME</div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div style={{padding:18}}>
-          <div style={{marginBottom:18}}>
-            <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:10}}>
-              <span style={{fontSize:15}}>📊</span>
-              <span style={{fontSize:13,fontWeight:800}}>이닝별 스코어</span>
-            </div>
-            <div style={{background:dark?"rgba(255,255,255,0.03)":"rgba(0,0,0,0.03)",border:`1px solid ${dark?"rgba(255,255,255,0.08)":"rgba(0,0,0,0.08)"}`,borderRadius:12,padding:4}}>
-              {isSch?<div style={{textAlign:"center",padding:16,color:D.textSub,fontSize:12}}>경기 예정 · 경기 후 스코어가 표시됩니다</div>
-              :<div style={{overflowX:"auto"}}>
-                <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,minWidth:300}}>
-                  <thead><tr>
-                    <td style={{padding:"6px",color:D.textSub,width:55}}></td>
-                    {[1,2,3,4,5,6,7,8,9].map(i=><td key={i} style={{textAlign:"center",padding:"6px 3px",color:D.textSub,fontWeight:700}}>{i}</td>)}
-                    <td style={{textAlign:"center",padding:"6px 5px",color:D.text,fontWeight:900,fontSize:13}}>R</td>
-                  </tr></thead>
-                  <tbody>
-                    {[[game.away,game.awayInnings||Array(9).fill(-1),aw.color],[game.home,game.homeInnings||Array(9).fill(-1),hw.color]].map(([nm,sc,cl],ri)=>{
-                      const tot=sc.reduce((a,b)=>a+(b>0?b:0),0);
-                      return <tr key={ri}>
-                        <td style={{padding:"8px 6px",fontSize:11,fontWeight:700,color:D.textSub,borderTop:`1px solid ${dark?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.07)"}`}}>
-                          <div style={{display:"flex",alignItems:"center",gap:4}}>
-                            <div style={{width:5,height:5,borderRadius:"50%",background:cl}}/>{nm}
-                          </div>
-                        </td>
-                        {sc.map((s,i)=><td key={i} style={{textAlign:"center",padding:"8px 3px",color:s>0?D.text:D.textMuted,fontWeight:s>0?700:400,borderTop:`1px solid ${dark?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.07)"}`}}>{s===-1?<span style={{color:D.textMuted}}>-</span>:s}</td>)}
-                        <td style={{textAlign:"center",padding:"8px 5px",fontWeight:900,fontSize:14,color:D.text,borderTop:`1px solid ${dark?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.07)"}`}}>{tot}</td>
-                      </tr>;
-                    })}
-                  </tbody>
-                </table>
-              </div>}
-            </div>
-          </div>
-          <div style={{marginBottom:18}}>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-              <div style={{display:"flex",alignItems:"center",gap:6}}>
-                <span style={{fontSize:15}}>🧢</span>
-                <span style={{fontSize:13,fontWeight:800}}>선발 라인업</span>
-              </div>
-              {hasLU&&<div style={{display:"flex",gap:4}}>
-                {[{id:"away",label:game.away,t:aw},{id:"home",label:game.home,t:hw}].map(({id,label,t})=>(
-                  <button key={id} onClick={()=>setLt(id)} style={{padding:"4px 10px",background:lt===id?t.color:dark?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.06)",borderRadius:8,color:"#fff",fontSize:11,fontWeight:700}}>
-                    {label}
-                  </button>
-                ))}
-              </div>}
-            </div>
-            {!hasLU
-              ?<div style={{background:dark?"rgba(255,255,255,0.03)":"rgba(0,0,0,0.03)",border:`1px solid ${dark?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.07)"}`,borderRadius:14,padding:"26px 20px",textAlign:"center"}}>
-                <div style={{fontSize:24,marginBottom:6}}>📋</div>
-                <div style={{fontSize:13,color:D.textSub}}>라인업은 경기 당일 발표됩니다</div>
-              </div>
-              :<div style={{background:dark?"rgba(255,255,255,0.02)":"rgba(0,0,0,0.02)",border:`1px solid ${dark?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.07)"}`,borderRadius:14,padding:"12px 10px"}}>
-                <div style={{textAlign:"center",marginBottom:4,fontSize:12,fontWeight:700,color:ct.color}}>{ct.name}</div>
-                <Diamond players={cur} color={ct.color} dark={dark}/>
-                <div style={{marginTop:10,display:"grid",gridTemplateColumns:"1fr 1fr",gap:4}}>
-                  {cur.map((p,i)=>(
-                    <div key={i} style={{display:"flex",alignItems:"center",gap:6,padding:"5px 7px",borderRadius:7,background:dark?"rgba(255,255,255,0.03)":"rgba(0,0,0,0.03)",border:`1px solid ${dark?"rgba(255,255,255,0.05)":"rgba(0,0,0,0.05)"}`}}>
-                      <span style={{fontSize:10,fontWeight:900,minWidth:17,textAlign:"center",color:p.p==="P"?"#fff":ct.color,background:p.p==="P"?ct.color+"cc":"transparent",borderRadius:3,padding:p.p==="P"?"1px 3px":"0"}}>{p.n}</span>
-                      <span style={{fontSize:12,fontWeight:700,color:dark?"#fff":D.text,flex:1}}>{p.name}</span>
-                      <span style={{fontSize:10,color:D.textSub}}>{p.p}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            }
-          </div>
+function renderHeader(d) {
+  document.getElementById('header').innerHTML = `
+    <div style="background:${state.dark?'linear-gradient(180deg,#111827 0%,transparent 100%)':'linear-gradient(180deg,#fff 0%,transparent 100%)'};padding:18px 16px 12px">
+      <div style="max-width:600px;margin:0 auto;display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:24px">🐯</span>
           <div>
-            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
-              <div style={{display:"flex",alignItems:"center",gap:6}}>
-                <span style={{fontSize:15}}>📝</span>
-                <span style={{fontSize:13,fontWeight:800}}>내 메모</span>
-              </div>
-              {saved&&<span style={{fontSize:11,color:"#00C864",fontWeight:700}}>저장됨 ✓</span>}
-            </div>
-            <textarea value={memo} onChange={e=>saveMemo(e.target.value)} placeholder="이 경기에 대한 생각이나 메모를 남겨보세요 ✍️" style={{width:"100%",minHeight:90,padding:12,background:dark?"rgba(255,255,255,0.05)":"rgba(0,0,0,0.04)",border:`1px solid ${dark?"rgba(255,255,255,0.1)":"rgba(0,0,0,0.1)"}`,borderRadius:12,color:D.text,fontSize:13,lineHeight:1.6,resize:"none"}}/>
+            <div style="font-size:19px;font-weight:900;color:${d.text}">KBO 대시보드</div>
+            <div style="font-size:10px;font-weight:700"><span style="color:#E31837">KIA 타이거즈</span><span style="color:${d.sub}"> · 2026 개막 ⚾</span></div>
+          </div>
+        </div>
+        <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+          <div style="font-size:15px;font-weight:700;color:${d.text}">${state.clock.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <div style="font-size:10px;color:${d.sub}">${state.clock.toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'})}</div>
+            <button onclick="toggleDark()" style="background:${state.dark?'rgba(255,255,255,0.1)':'rgba(0,0,0,0.08)'};border-radius:20px;padding:3px 8px;font-size:13px">${state.dark?'☀️':'🌙'}</button>
           </div>
         </div>
       </div>
-    </div>
-  </div>
-  </div>
-  );
+    </div>`;
 }
 
-function CalTab({onSelect,dark,D}){
-  const [yr,setYr]=useState(2026);
-  const [mo,setMo]=useState(3);
-  const [sel,setSel]=useState("2026-03-28");
-  const today="2026-03-27";
-  const WDAYS=["월","화","수","목","금","토","일"];
-  const cells=[];
-  const f=fdow(yr,mo);
-  for(let i=0;i<f;i++)cells.push(null);
-  for(let i=1;i<=dim(yr,mo);i++)cells.push(i);
+function renderNav() {
+  const tabs = [{id:'cal',icon:'📅',label:'일정'},{id:'stand',icon:'🏆',label:'순위'},{id:'lead',icon:'⭐',label:'주목'}];
+  document.getElementById('nav').innerHTML = tabs.map(t =>
+    `<button class="${state.tab===t.id?'active':''}" onclick="setTab('${t.id}')">
+      <span class="icon">${t.icon}</span><span>${t.label}</span>
+    </button>`
+  ).join('');
+}
 
-  // 달력용: KIA 경기만
-  const kbdMap={};
-  SCH.forEach(g=>{
-    if(g.away!=="KIA"&&g.home!=="KIA")return;
-    const[gy,gm,gd]=g.date.split("-").map(Number);
-    if(gy===yr&&gm===mo)kbdMap[gd]=g;
+function renderContent(d) {
+  const el = document.getElementById('content');
+  if(state.tab==='cal') el.innerHTML = renderCal(d);
+  else if(state.tab==='stand') el.innerHTML = renderStand(d);
+  else el.innerHTML = renderLead(d);
+}
+
+function renderCal(d) {
+  const {yr,mo,sel} = state;
+  const WDAYS = ['월','화','수','목','금','토','일'];
+  const f = fdow(yr,mo);
+  const days = dim(yr,mo);
+  const today = '2026-03-27';
+
+  // 달력 KIA 경기 맵
+  const kmap = {};
+  SCH.forEach(g => {
+    if(g.away!=='KIA'&&g.home!=='KIA') return;
+    const [gy,gm,gd] = g.date.split('-').map(Number);
+    if(gy===yr&&gm===mo) kmap[gd]=g;
   });
 
-  // 날짜별 전체 경기 (KIA 먼저)
-  const dayGs=SCH.filter(g=>g.date===sel);
-  const kiaGs=dayGs.filter(g=>g.away==="KIA"||g.home==="KIA");
-  const otherGs=dayGs.filter(g=>g.away!=="KIA"&&g.home!=="KIA");
-  const selGs=[...kiaGs,...otherGs];
+  // 선택된 날 경기 (KIA 먼저)
+  const dayGs = SCH.filter(g=>g.date===sel);
+  const selGs = [...dayGs.filter(g=>g.away==='KIA'||g.home==='KIA'), ...dayGs.filter(g=>g.away!=='KIA'&&g.home!=='KIA')];
+  const [,sm,sd] = sel.split('-').map(Number);
+  const dw = ['일','월','화','수','목','금','토'][new Date(yr,sm-1,sd).getDay()];
 
-  const[,sm,sd]=sel.split("-").map(Number);
-  const dw=["일","월","화","수","목","금","토"][new Date(yr,sm-1,sd).getDay()];
+  let cells = '';
+  for(let i=0;i<f;i++) cells += `<div class="cal-cell" style="min-height:68px"></div>`;
+  for(let i=1;i<=days;i++) {
+    const ds = `${yr}-${pad(mo)}-${pad(i)}`;
+    const kg = kmap[i];
+    const isSel = ds===sel;
+    const isToday = ds===today;
+    const dow = (f+i-1)%7;
+    const isPast = new Date(ds)<new Date('2026-03-28');
+    const isHome = kg&&kg.home==='KIA';
+    const oppKey = kg?(isHome?kg.away:kg.home):null;
+    const dayColor = dow===5?'#4FC3F7':dow===6?'#EF5350':isSel?'#E31837':d.text;
+    cells += `<div class="cal-cell${isSel?' sel':''}${isPast?' past':''}" onclick="selDate('${ds}')">
+      <div class="cal-day${isSel?' sel':''}${isToday?' today':''}${dow===5?' sat':dow===6?' sun':''}" style="color:${dayColor}">${i}</div>
+      ${kg&&oppKey?`<div style="display:flex;flex-direction:column;align-items:center;gap:1px">
+        ${isHome?`<div class="home-badge">홈</div>`:''}
+        ${logo(oppKey,22)}
+        <div style="font-size:7px;color:${d.sub};font-weight:600;line-height:1">${kg.time}</div>
+      </div>`:''}
+    </div>`;
+  }
 
-  return (
-    <div style={{animation:"fadeIn 0.4s"}}>
-      {yr===2026&&mo===3&&(
-        <div style={{background:"linear-gradient(135deg,rgba(227,24,55,0.15),rgba(255,179,0,0.1))",border:"1px solid rgba(227,24,55,0.3)",borderRadius:12,padding:"11px 14px",marginBottom:14,display:"flex",alignItems:"center",gap:10}}>
-          <span style={{fontSize:20}}>⚾</span>
-          <div style={{flex:1}}>
-            <div style={{fontSize:13,fontWeight:900,color:D.text}}>2026 KBO 개막까지 <span style={{color:"#E31837"}}>D-2</span></div>
-            <div style={{fontSize:11,color:D.textSub}}>3/28(토) · 인천 SSG랜더스필드 · 14:00</div>
+  let gameList = '';
+  if(new Date(sel)<new Date('2026-03-28')) {
+    gameList = `<div style="text-align:center;padding:18px;color:${d.sub};font-size:12px;background:${d.bg};border-radius:12px;border:1px solid ${d.bgB}">⚾ 개막 전 · 3월 28일 (토) 개막</div>`;
+  } else if(selGs.length===0) {
+    gameList = `<div style="text-align:center;padding:18px;color:${d.sub};font-size:12px;background:${d.bg};border-radius:12px;border:1px solid ${d.bgB}">😴 휴식일</div>`;
+  } else {
+    gameList = selGs.map((g,i) => {
+      const isKia = g.away==='KIA'||g.home==='KIA';
+      const kiaHome = g.home==='KIA';
+      const lKey = isKia&&kiaHome?g.home:g.away;
+      const rKey = isKia&&kiaHome?g.away:g.home;
+      return `<div class="card${isKia?' kia':''}" onclick="openModal(${i},'${sel}')">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:5px">
+            <span style="font-size:11px;font-weight:700;color:#FFB300">${g.time} 시작</span>
+            ${isKia?`<span class="tag-kia">🐯 KIA</span>`:''}
+            ${g.lineup?`<span class="tag-lu">라인업 공개</span>`:''}
           </div>
-          <div style={{textAlign:"right"}}>
-            <div style={{fontSize:11,color:"#FFB300",fontWeight:700}}>KIA 원정개막</div>
-            <div style={{fontSize:11,color:D.textSub}}>🐯 vs 🚀</div>
+          <span style="font-size:10px;color:${d.sub}">📍${g.stad} ›</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:7px;flex:1">
+            ${logo(lKey,36)}
+            <div>
+              <div style="font-size:12px;font-weight:700;color:${lKey==='KIA'?'#ff6b6b':d.text}">${T[lKey]?.name||lKey}</div>
+              <div style="font-size:9px;color:${d.sub}">${isKia&&kiaHome?'HOME':'AWAY'}</div>
+            </div>
+          </div>
+          <div style="font-size:12px;font-weight:800;color:#FFB300;padding:0 8px">VS</div>
+          <div style="display:flex;align-items:center;gap:7px;flex:1;flex-direction:row-reverse">
+            ${logo(rKey,36)}
+            <div style="text-align:right">
+              <div style="font-size:12px;font-weight:700;color:${rKey==='KIA'?'#ff6b6b':d.text}">${T[rKey]?.name||rKey}</div>
+              <div style="font-size:9px;color:${d.sub}">${isKia&&kiaHome?'AWAY':'HOME'}</div>
+            </div>
           </div>
         </div>
-      )}
-      <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:16,marginBottom:12}}>
-        <button onClick={()=>mo===1?(setYr(y=>y-1),setMo(12)):setMo(m=>m-1)} style={{background:"none",color:"#E31837",fontSize:22,padding:"4px 10px",lineHeight:1}}>‹</button>
-        <h2 style={{fontSize:17,fontWeight:900,minWidth:110,textAlign:"center",color:D.text}}>{yr}년 {mo}월</h2>
-        <button onClick={()=>mo===12?(setYr(y=>y+1),setMo(1)):setMo(m=>m+1)} style={{background:"none",color:"#E31837",fontSize:22,padding:"4px 10px",lineHeight:1}}>›</button>
+      </div>`;
+    }).join('');
+  }
+
+  return `
+    ${yr===2026&&mo===3?`<div style="background:linear-gradient(135deg,rgba(227,24,55,0.15),rgba(255,179,0,0.1));border:1px solid rgba(227,24,55,0.3);border-radius:12px;padding:11px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+      <span style="font-size:20px">⚾</span>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:900;color:${d.text}">2026 KBO 개막까지 <span style="color:#E31837">D-2</span></div>
+        <div style="font-size:11px;color:${d.sub}">3/28(토) · 인천 SSG랜더스필드 · 14:00</div>
       </div>
-      <div style={{background:dark?"rgba(255,255,255,0.03)":"rgba(0,0,0,0.03)",border:`1px solid ${dark?"rgba(255,255,255,0.08)":"rgba(0,0,0,0.08)"}`,borderRadius:14,overflow:"hidden",marginBottom:16}}>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",borderBottom:`1px solid ${dark?"rgba(255,255,255,0.07)":"rgba(0,0,0,0.07)"}`}}>
-          {WDAYS.map((w,i)=><div key={w} style={{textAlign:"center",padding:"8px 0",fontSize:11,fontWeight:700,color:i===5?"#4FC3F7":i===6?"#EF5350":D.textSub}}>{w}</div>)}
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)"}}>
-          {cells.map((day,idx)=>{
-            if(!day)return <div key={`e${idx}`} style={{minHeight:62}}/>;
-            const ds=`${yr}-${pad(mo)}-${pad(day)}`;
-            const kg=kbdMap[day];
-            const isSel=ds===sel;
-            const isToday=ds===today;
-            const dow=(f+day-1)%7;
-            const isPast=new Date(ds)<new Date("2026-03-28");
-            const isHome=kg&&kg.home==="KIA";
-            const oppKey=kg?(isHome?kg.away:kg.home):null;
-            return (
-              <div key={day} onClick={()=>setSel(ds)} style={{minHeight:68,padding:"3px 2px",background:isSel?"rgba(227,24,55,0.15)":"transparent",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2,opacity:isPast?0.4:1}}>
-                <div style={{width:22,height:22,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:isToday?900:500,marginTop:2,background:isToday?(dark?"rgba(255,255,255,0.18)":"rgba(0,0,0,0.12)"):"transparent",color:dow===5?"#4FC3F7":dow===6?"#EF5350":isSel?"#E31837":D.text,border:isSel?"2px solid #E31837":"2px solid transparent"}}>{day}</div>
-                {kg&&oppKey&&(
-                  <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:1}}>
-                    {isHome&&<div style={{fontSize:7,fontWeight:800,color:"#E31837",background:"rgba(227,24,55,0.12)",borderRadius:3,padding:"0 3px",lineHeight:"1.4"}}>홈</div>}
-                    <Logo team={oppKey} size={22}/>
-                    <div style={{fontSize:7,color:D.textSub,fontWeight:600,lineHeight:1}}>{kg.time}</div>
-                  </div>
-                )}
+      <div style="text-align:right">
+        <div style="font-size:11px;color:#FFB300;font-weight:700">KIA 원정개막</div>
+        <div style="font-size:11px;color:${d.sub}">🐯 vs 🚀</div>
+      </div>
+    </div>`:''}
+    <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:12px">
+      <button onclick="prevMo()" style="color:#E31837;font-size:22px;padding:4px 10px;line-height:1">‹</button>
+      <div style="font-size:17px;font-weight:900;min-width:110px;text-align:center;color:${d.text}">${yr}년 ${mo}월</div>
+      <button onclick="nextMo()" style="color:#E31837;font-size:22px;padding:4px 10px;line-height:1">›</button>
+    </div>
+    <div style="background:${d.bg};border:1px solid ${d.bgB};border-radius:14px;overflow:hidden;margin-bottom:16px">
+      <div class="cal-grid" style="border-bottom:1px solid ${d.bgB}">
+        ${WDAYS.map((w,i)=>`<div style="text-align:center;padding:8px 0;font-size:11px;font-weight:700;color:${i===5?'#4FC3F7':i===6?'#EF5350':d.sub}">${w}</div>`).join('')}
+      </div>
+      <div class="cal-grid">${cells}</div>
+    </div>
+    <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:10px">
+      <div style="font-size:14px;font-weight:900;color:${d.text}">${sm}월 ${sd}일 (${dw})</div>
+      <span style="font-size:11px;color:${d.sub}">· ${selGs.length>0?selGs.length+'경기':'경기 없음'}</span>
+    </div>
+    ${gameList}`;
+}
+
+function renderStand(d) {
+  return `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;color:${d.sub};letter-spacing:0.1em">2025 최종 순위</div>
+      <span style="font-size:10px;background:rgba(255,179,0,0.15);border:1px solid rgba(255,179,0,0.3);color:#FFB300;border-radius:5px;padding:1px 6px;font-weight:700">개막 전</span>
+    </div>
+    <div style="background:${d.bg};border:1px solid ${d.cardB};border-radius:14px;overflow:hidden">
+      <div style="display:grid;grid-template-columns:28px 1fr 70px;padding:9px 12px;border-bottom:1px solid ${d.cardB};font-size:9px;font-weight:700;letter-spacing:0.1em;color:${d.sub};text-transform:uppercase">
+        <span>#</span><span>팀</span><span style="text-align:center">비고</span>
+      </div>
+      ${STAND.map((row,i)=>`
+        <div style="display:grid;grid-template-columns:28px 1fr 70px;padding:11px 12px;border-bottom:${i<9?`1px solid ${d.cardB}`:'none'};background:${row.s==='KIA'?'rgba(227,24,55,0.08)':'transparent'};align-items:center">
+          <span style="font-size:13px;font-weight:800;color:${row.r===1?'#FFD700':row.r===2?'#C0C0C0':row.r===3?'#CD7F32':d.sub}">${row.r}</span>
+          <div style="display:flex;align-items:center;gap:7px">
+            ${logo(row.s,24)}
+            <span style="font-size:13px;font-weight:${row.s==='KIA'?800:600};color:${row.s==='KIA'?'#ff7070':d.text}">${row.name}</span>
+          </div>
+          <span style="text-align:center;font-size:10px;color:${d.sub}">${row.note}</span>
+        </div>`).join('')}
+    </div>
+    <div style="font-size:10px;color:${d.muted};text-align:right;margin-top:6px">* 2025 정규시즌 최종 순위 기준</div>`;
+}
+
+function renderLead(d) {
+  const LEAD = {
+    batting:[{name:"김도영",team:"KIA",label:"전시즌 MVP"},{name:"문보경",team:"LG",label:"국가대표"},{name:"안현민",team:"KT",label:"신인왕"}],
+    hr:[{name:"노시환",team:"한화",label:"홈런왕 후보"},{name:"김도영",team:"KIA",label:"멀티툴"},{name:"채은성",team:"LG",label:"클러치"}],
+    era:[{name:"양현종",team:"KIA",label:"KIA 에이스"},{name:"원태인",team:"삼성",label:"삼성 에이스"},{name:"류현진",team:"한화",label:"복귀 시즌"}],
+  };
+  const cats = [{id:'batting',label:'타격'},{id:'hr',label:'홈런'},{id:'era',label:'투수'}];
+  return `
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      ${cats.map(c=>`<button onclick="setLcat('${c.id}')" style="padding:6px 14px;background:${state.lcat===c.id?'#E31837':'transparent'};border:1px solid ${state.lcat===c.id?'#E31837':d.cardB};color:${state.lcat===c.id?'#fff':d.text};border-radius:20px;font-size:12px;font-weight:700;font-family:'Noto Sans KR',sans-serif">${c.label} 주목</button>`).join('')}
+    </div>
+    <div style="margin-bottom:10px;padding:8px 12px;background:rgba(255,179,0,0.07);border:1px solid rgba(255,179,0,0.2);border-radius:9px">
+      <span style="font-size:11px;color:#FFB300;font-weight:700">⚾ 2026시즌 주목 선수 프리뷰</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${LEAD[state.lcat].map(p=>`
+        <div class="card${p.team==='KIA'?' kia':''}" style="${p.team==='KIA'?'border-color:rgba(227,24,55,0.28)':''}">
+          <div style="display:flex;align-items:center;gap:12px">
+            ${logo(p.team,32)}
+            <div style="flex:1">
+              <div style="display:flex;align-items:center;gap:5px">
+                <span style="font-size:14px;font-weight:800;color:${d.text}">${p.name}</span>
+                ${p.team==='KIA'?`<span class="tag-kia">KIA</span>`:''}
               </div>
-            );
-          })}
+              <div style="font-size:11px;color:${d.sub}">${p.team}</div>
+            </div>
+            <div style="font-size:10px;color:${d.sub}">${p.label}</div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function renderModal(d) {
+  const g = state.modalGame;
+  if(!g) return;
+  const aw = T[g.away]||{name:g.away,color:'#888'};
+  const hw = T[g.home]||{name:g.home,color:'#888'};
+  const isSch = !g.status||g.status==='BEFORE';
+  const hasLU = !!g.lineup;
+  const lt = state.modalLt;
+  const cur = lt==='away'?(g.lineup?.away||[]):(g.lineup?.home||[]);
+  const ct = lt==='away'?aw:hw;
+  const memo = localStorage.getItem(`m_${g.date}_${g.away}_${g.home}`)||'';
+
+  document.getElementById('modal-content').innerHTML = `
+    <div style="display:flex;justify-content:center;padding:10px 0 2px">
+      <div style="width:34px;height:4px;border-radius:2px;background:${state.dark?'rgba(255,255,255,0.15)':'rgba(0,0,0,0.15)'}"></div>
+    </div>
+    <div style="padding:10px 18px 14px;border-bottom:1px solid ${state.dark?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.08)'}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <span style="font-size:11px;font-weight:700;color:#FFB300">${g.time} 시작 · 📍 ${g.stad}</span>
+        <button onclick="closeModal()" style="background:${state.dark?'rgba(255,255,255,0.08)':'rgba(0,0,0,0.06)'};color:${state.dark?'rgba(255,255,255,0.6)':'rgba(0,0,0,0.5)'};border-radius:50%;width:28px;height:28px;font-size:16px;display:flex;align-items:center;justify-content:center">✕</button>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:10px;flex:1">
+          ${logo(g.away,48)}
+          <div>
+            <div style="font-size:13px;font-weight:800;color:${g.away==='KIA'?'#ff6b6b':d.text}">${aw.name}</div>
+            <div style="font-size:10px;color:${d.sub}">AWAY</div>
+          </div>
         </div>
+        <div style="text-align:center;padding:0 8px">
+          ${isSch?`<div style="font-size:18px;font-weight:800;color:#FFB300">VS</div>`
+          :`<div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:28px;font-weight:900;color:${d.text}">${g.awayScore??0}</span>
+            <span style="color:${d.sub}">:</span>
+            <span style="font-size:28px;font-weight:900;color:${d.text}">${g.homeScore??0}</span>
+          </div>`}
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex:1;flex-direction:row-reverse">
+          ${logo(g.home,48)}
+          <div style="text-align:right">
+            <div style="font-size:13px;font-weight:800;color:${g.home==='KIA'?'#ff6b6b':d.text}">${hw.name}</div>
+            <div style="font-size:10px;color:${d.sub}">HOME</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:18px">
+      <div style="margin-bottom:18px">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
+          <span style="font-size:15px">📊</span>
+          <span style="font-size:13px;font-weight:800;color:${d.text}">이닝별 스코어</span>
+        </div>
+        <div style="background:${d.bg};border:1px solid ${d.bgB};border-radius:12px;padding:4px">
+          ${isSch?`<div style="text-align:center;padding:16px;color:${d.sub};font-size:12px">경기 예정 · 경기 후 스코어가 표시됩니다</div>`
+          :`<div style="overflow-x:auto"><!-- 이닝 스코어 표 --></div>`}
+        </div>
+      </div>
+      <div style="margin-bottom:18px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:15px">🧢</span>
+            <span style="font-size:13px;font-weight:800;color:${d.text}">선발 라인업</span>
+          </div>
+          ${hasLU?`<div style="display:flex;gap:4px">
+            <button onclick="setModalLt('away')" style="padding:4px 10px;background:${lt==='away'?aw.color:(state.dark?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.06)')};border-radius:8px;color:#fff;font-size:11px;font-weight:700;font-family:'Noto Sans KR',sans-serif">${g.away}</button>
+            <button onclick="setModalLt('home')" style="padding:4px 10px;background:${lt==='home'?hw.color:(state.dark?'rgba(255,255,255,0.07)':'rgba(0,0,0,0.06)')};border-radius:8px;color:#fff;font-size:11px;font-weight:700;font-family:'Noto Sans KR',sans-serif">${g.home}</button>
+          </div>`:''}
+        </div>
+        ${!hasLU?`<div style="background:${d.bg};border:1px solid ${d.bgB};border-radius:14px;padding:26px 20px;text-align:center">
+          <div style="font-size:24px;margin-bottom:6px">📋</div>
+          <div style="font-size:13px;color:${d.sub}">라인업은 경기 당일 발표됩니다</div>
+        </div>`
+        :`<div style="background:${d.bg};border:1px solid ${d.bgB};border-radius:14px;padding:12px 10px">
+          <div style="text-align:center;margin-bottom:4px;font-size:12px;font-weight:700;color:${ct.color}">${ct.name}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:10px">
+            ${cur.map(p=>`<div style="display:flex;align-items:center;gap:6px;padding:5px 7px;border-radius:7px;background:${d.bg};border:1px solid ${d.bgB}">
+              <span style="font-size:10px;font-weight:900;min-width:17px;text-align:center;color:${p.p==='P'?'#fff':ct.color};background:${p.p==='P'?ct.color+'cc':'transparent'};border-radius:3px;padding:${p.p==='P'?'1px 3px':'0'}">${p.n}</span>
+              <span style="font-size:12px;font-weight:700;color:${state.dark?'#fff':d.text};flex:1">${p.name}</span>
+              <span style="font-size:10px;color:${d.sub}">${p.p}</span>
+            </div>`).join('')}
+          </div>
+        </div>`}
       </div>
       <div>
-        <div style={{display:"flex",alignItems:"baseline",gap:8,marginBottom:10}}>
-          <h3 style={{fontSize:14,fontWeight:900,color:D.text}}>{sm}월 {sd}일 ({dw})</h3>
-          <span style={{fontSize:11,color:D.textSub}}>· {selGs.length>0?`${selGs.length}경기`:"경기 없음"}</span>
-        </div>
-        {new Date(sel)<new Date("2026-03-28")
-          ?<div style={{textAlign:"center",padding:18,color:D.textSub,fontSize:12,background:dark?"rgba(255,255,255,0.02)":"rgba(0,0,0,0.02)",borderRadius:12,border:`1px solid ${dark?"rgba(255,255,255,0.05)":"rgba(0,0,0,0.05)"}`}}>⚾ 개막 전 · 정규시즌 개막 3월 28일 (토)</div>
-          :selGs.length===0
-          ?<div style={{textAlign:"center",padding:18,color:D.textSub,fontSize:12,background:dark?"rgba(255,255,255,0.02)":"rgba(0,0,0,0.02)",borderRadius:12,border:`1px solid ${dark?"rgba(255,255,255,0.05)":"rgba(0,0,0,0.05)"}`}}>😴 휴식일</div>
-          :<div style={{display:"flex",flexDirection:"column",gap:8}}>
-            {selGs.map((g,i)=>{
-              const isKia=g.away==="KIA"||g.home==="KIA";
-              const kiaHome=g.home==="KIA";
-              const lKey=isKia&&kiaHome?g.home:g.away;
-              const rKey=isKia&&kiaHome?g.away:g.home;
-              const lLabel=isKia&&kiaHome?"HOME":"AWAY";
-              const rLabel=isKia&&kiaHome?"AWAY":"HOME";
-              return (
-                <div key={i} onClick={()=>onSelect(g)} style={{background:isKia?"rgba(227,24,55,0.08)":D.card,border:`1px solid ${isKia?"rgba(227,24,55,0.25)":D.cardBorder}`,borderRadius:14,padding:"12px 14px",cursor:"pointer"}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-                    <div style={{display:"flex",alignItems:"center",gap:5}}>
-                      <span style={{fontSize:11,fontWeight:700,color:"#FFB300"}}>{g.time} 시작</span>
-                      {isKia&&<span style={{fontSize:9,background:"#E31837",color:"#fff",borderRadius:4,padding:"1px 5px",fontWeight:700}}>🐯 KIA</span>}
-                      {g.lineup&&<span style={{fontSize:9,background:"rgba(0,230,118,0.15)",color:"#00E676",borderRadius:4,padding:"1px 5px",fontWeight:700,border:"1px solid rgba(0,230,118,0.3)"}}>라인업 공개</span>}
-                    </div>
-                    <span style={{fontSize:10,color:D.textSub}}>📍{g.stad} ›</span>
-                  </div>
-                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                    <div style={{display:"flex",alignItems:"center",gap:7,flex:1}}>
-                      <div style={{width:36,height:36,display:"flex",alignItems:"center",justifyContent:"center"}}><Logo team={lKey} size={36}/></div>
-                      <div>
-                        <div style={{fontSize:12,fontWeight:700,color:lKey==="KIA"?"#ff6b6b":D.text}}>{T[lKey]?.name||lKey}</div>
-                        <div style={{fontSize:9,color:D.textSub}}>{lLabel}</div>
-                      </div>
-                    </div>
-                    <div style={{fontSize:12,fontWeight:800,color:"#FFB300",padding:"0 8px"}}>VS</div>
-                    <div style={{display:"flex",alignItems:"center",gap:7,flex:1,flexDirection:"row-reverse"}}>
-                      <div style={{width:36,height:36,display:"flex",alignItems:"center",justifyContent:"center"}}><Logo team={rKey} size={36}/></div>
-                      <div style={{textAlign:"right"}}>
-                        <div style={{fontSize:12,fontWeight:700,color:rKey==="KIA"?"#ff6b6b":D.text}}>{T[rKey]?.name||rKey}</div>
-                        <div style={{fontSize:9,color:D.textSub}}>{rLabel}</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:15px">📝</span>
+            <span style="font-size:13px;font-weight:800;color:${d.text}">내 메모</span>
           </div>
-        }
+          <span id="memo-saved" style="font-size:11px;color:#00C864;font-weight:700;display:none">저장됨 ✓</span>
+        </div>
+        <textarea id="memo-input" placeholder="이 경기에 대한 생각이나 메모를 남겨보세요 ✍️" style="width:100%;min-height:90px;padding:12px;background:${state.dark?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.04)'};border:1px solid ${state.dark?'rgba(255,255,255,0.1)':'rgba(0,0,0,0.1)'};border-radius:12px;color:${d.text};font-size:13px;line-height:1.6;resize:none">${memo}</textarea>
       </div>
-    </div>
-  </div>
-  );
+    </div>`;
+
+  document.getElementById('memo-input').addEventListener('input', e => {
+    localStorage.setItem(`m_${g.date}_${g.away}_${g.home}`, e.target.value);
+    const s = document.getElementById('memo-saved');
+    s.style.display='inline';
+    clearTimeout(window._memoT);
+    window._memoT = setTimeout(()=>s.style.display='none',1500);
+  });
 }
 
-function App(){
-  const [tab,setTab]=useState("cal");
-  const [lcat,setLcat]=useState("batting");
-  const [time,setTime]=useState(new Date());
-  const [game,setGame]=useState(null);
-  const [dark,setDark]=useState(false);
+// ── 액션 ──
+function setTab(t) { state.tab=t; render(); }
+function setLcat(c) { state.lcat=c; render(); }
+function toggleDark() {
+  state.dark=!state.dark;
+  document.body.classList.toggle('dark',state.dark);
+  document.getElementById('theme-meta').setAttribute('content',state.dark?'#0A0E1A':'#E8ECF1');
+  render();
+  if(state.modalGame) renderModal(D());
+}
+function prevMo() { if(state.mo===1){state.yr--;state.mo=12;}else state.mo--; render(); }
+function nextMo() { if(state.mo===12){state.yr++;state.mo=1;}else state.mo++; render(); }
+function selDate(ds) { state.sel=ds; render(); }
 
-  const D=dark?{bg:"#0A0E1A",card:"rgba(255,255,255,0.04)",cardBorder:"rgba(255,255,255,0.07)",text:"#fff",textSub:"rgba(255,255,255,0.4)",textMuted:"rgba(255,255,255,0.15)",navBg:"#111827",navBorder:"rgba(255,255,255,0.08)",navText:"rgba(255,255,255,0.35)",inputBg:"rgba(255,255,255,0.03)"}:{bg:"#E8ECF1",card:"#fff",cardBorder:"rgba(0,0,0,0.1)",text:"#0A0E1A",textSub:"rgba(0,0,0,0.5)",textMuted:"rgba(0,0,0,0.2)",navBg:"#fff",navBorder:"rgba(0,0,0,0.1)",navText:"rgba(0,0,0,0.45)",inputBg:"rgba(0,0,0,0.03)"};
+function openModal(idx, date) {
+  const dayGs = SCH.filter(g=>g.date===date);
+  const sorted = [...dayGs.filter(g=>g.away==='KIA'||g.home==='KIA'), ...dayGs.filter(g=>g.away!=='KIA'&&g.home!=='KIA')];
+  state.modalGame = sorted[idx];
+  state.modalLt = 'away';
+  const overlay = document.getElementById('modal-overlay');
+  const box = document.getElementById('modal-box');
+  box.classList.remove('closing');
+  overlay.classList.add('open');
+  renderModal(D());
+  history.pushState({modal:true},'');
+  document.body.style.overflow='hidden';
 
-  useEffect(()=>{const t=setInterval(()=>setTime(new Date()),1000);return()=>clearInterval(t);},[]);
-  useEffect(()=>{
-    document.body.style.background=dark?"#0A0E1A":"#E8ECF1";
-    document.getElementById("theme-meta")?.setAttribute("content",dark?"#0A0E1A":"#E8ECF1");
-  },[dark]);
-
-  const openGame=g=>{setGame(g);history.pushState({modal:true},"");};
-  const closeRef=useRef(null);
-  useEffect(()=>{
-    const fn=()=>{if(closeRef.current)closeRef.current();else setGame(null);};
-    window.addEventListener("popstate",fn);
-    return()=>window.removeEventListener("popstate",fn);
-  },[]);
-
-  const TABS=[{id:"cal",icon:"📅",label:"일정"},{id:"stand",icon:"🏆",label:"순위"},{id:"lead",icon:"⭐",label:"주목"}];
-  const ORDER=["cal","stand","lead"];
-  const ts=useRef(null);
-  const thStart=e=>{ts.current={x:e.touches[0].clientX,y:e.touches[0].clientY};};
-  const thEnd=e=>{
-    if(!ts.current)return;
-    const dx=ts.current.x-e.changedTouches[0].clientX;
-    const dy=ts.current.y-e.changedTouches[0].clientY;
-    ts.current=null;
-    if(Math.abs(dy)>Math.abs(dx)||Math.abs(dx)<70)return;
-    const ci=ORDER.indexOf(tab);
-    if(dx>0&&ci<ORDER.length-1)setTab(ORDER[ci+1]);
-    if(dx<0&&ci>0)setTab(ORDER[ci-1]);
-  };
-
-  return (
-    <div style={{minHeight:"100vh",background:D.bg,color:D.text,transition:"background 0.3s,color 0.3s"}}>
-      {game&&<Modal game={game} onClose={()=>setGame(null)} closeRef={closeRef} dark={dark} D={D}/>}
-      <div style={{background:dark?"linear-gradient(180deg,#111827 0%,transparent 100%)":"linear-gradient(180deg,#fff 0%,transparent 100%)",padding:"18px 16px 12px"}}>
-        <div style={{maxWidth:600,margin:"0 auto",display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-          <div style={{display:"flex",alignItems:"center",gap:8}}>
-            <span style={{fontSize:24}}>🐯</span>
-            <div>
-              <h1 style={{fontSize:19,fontWeight:900,color:D.text}}>KBO 대시보드</h1>
-              <p style={{fontSize:10,fontWeight:700}}><span style={{color:"#E31837"}}>KIA 타이거즈</span><span style={{color:D.textSub}}> · 2026 개막 ⚾</span></p>
-            </div>
-          </div>
-          <div style={{textAlign:"right",display:"flex",flexDirection:"column",alignItems:"flex-end",gap:6}}>
-            <div style={{fontSize:15,fontWeight:700,color:D.text}}>{time.toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit",second:"2-digit"})}</div>
-            <div style={{display:"flex",alignItems:"center",gap:6}}>
-              <div style={{fontSize:10,color:D.textSub}}>{time.toLocaleDateString("ko-KR",{month:"long",day:"numeric",weekday:"short"})}</div>
-              <button onClick={()=>setDark(!dark)} style={{background:dark?"rgba(255,255,255,0.1)":"rgba(0,0,0,0.08)",borderRadius:20,padding:"3px 8px",fontSize:13}}>{dark?"☀️":"🌙"}</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div onTouchStart={thStart} onTouchEnd={thEnd} style={{maxWidth:600,margin:"0 auto",padding:"14px 16px 70px"}}>
-        {tab==="cal"&&<CalTab onSelect={openGame} dark={dark} D={D}/>}
-        {tab==="stand"&&(
-          <div style={{animation:"fadeIn 0.4s"}}>
-            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
-              <h2 style={{fontSize:12,fontWeight:700,color:D.textSub,letterSpacing:"0.1em"}}>2025 최종 순위</h2>
-              <span style={{fontSize:10,background:"rgba(255,179,0,0.15)",border:"1px solid rgba(255,179,0,0.3)",color:"#FFB300",borderRadius:5,padding:"1px 6px",fontWeight:700}}>개막 전</span>
-            </div>
-            <div style={{background:D.inputBg,border:`1px solid ${D.cardBorder}`,borderRadius:14,overflow:"hidden"}}>
-              <div style={{display:"grid",gridTemplateColumns:"28px 1fr 70px",padding:"9px 12px",borderBottom:`1px solid ${D.cardBorder}`,fontSize:9,fontWeight:700,letterSpacing:"0.1em",color:D.textSub,textTransform:"uppercase"}}>
-                <span>#</span><span>팀</span><span style={{textAlign:"center"}}>비고</span>
-              </div>
-              {STAND.map((row,i)=>(
-                <div key={row.r} style={{display:"grid",gridTemplateColumns:"28px 1fr 70px",padding:"11px 12px",borderBottom:i<9?`1px solid ${D.cardBorder}`:"none",background:row.s==="KIA"?"rgba(227,24,55,0.08)":"transparent",alignItems:"center"}}>
-                  <span style={{fontSize:13,fontWeight:800,color:row.r===1?"#FFD700":row.r===2?"#C0C0C0":row.r===3?"#CD7F32":D.textSub}}>{row.r}</span>
-                  <div style={{display:"flex",alignItems:"center",gap:7}}>
-                    <div style={{width:24,height:24,display:"flex",alignItems:"center",justifyContent:"center"}}><Logo team={row.s} size={24}/></div>
-                    <span style={{fontSize:13,fontWeight:row.s==="KIA"?800:600,color:row.s==="KIA"?"#ff7070":D.text}}>{row.name}</span>
-                  </div>
-                  <span style={{textAlign:"center",fontSize:10,color:D.textSub}}>{row.note}</span>
-                </div>
-              ))}
-            </div>
-            <p style={{fontSize:10,color:D.textMuted,textAlign:"right",marginTop:6}}>* 2025 정규시즌 최종 순위 기준</p>
-          </div>
-        )}
-        {tab==="lead"&&(
-          <div style={{animation:"fadeIn 0.4s"}}>
-            <div style={{display:"flex",gap:6,marginBottom:12}}>
-              {[{id:"batting",label:"타격"},{id:"hr",label:"홈런"},{id:"era",label:"투수"}].map(c=>(
-                <button key={c.id} onClick={()=>setLcat(c.id)} style={{padding:"6px 14px",background:lcat===c.id?"#E31837":"transparent",border:`1px solid ${lcat===c.id?"#E31837":D.cardBorder}`,color:lcat===c.id?"#fff":D.text,borderRadius:20,fontSize:12,fontWeight:700}}>{c.label} 주목</button>
-              ))}
-            </div>
-            <div style={{marginBottom:10,padding:"8px 12px",background:"rgba(255,179,0,0.07)",border:"1px solid rgba(255,179,0,0.2)",borderRadius:9}}>
-              <span style={{fontSize:11,color:"#FFB300",fontWeight:700}}>⚾ 2026시즌 주목 선수 프리뷰</span>
-            </div>
-            <div style={{display:"flex",flexDirection:"column",gap:8}}>
-              {LEAD[lcat].map((p,i)=>(
-                <div key={i} style={{display:"flex",alignItems:"center",background:p.team==="KIA"?"rgba(227,24,55,0.08)":D.card,border:`1px solid ${p.team==="KIA"?"rgba(227,24,55,0.28)":D.cardBorder}`,borderRadius:13,padding:"13px 15px",gap:12}}>
-                  <div style={{width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center"}}><Logo team={p.team} size={32}/></div>
-                  <div style={{flex:1}}>
-                    <div style={{display:"flex",alignItems:"center",gap:5}}>
-                      <span style={{fontSize:14,fontWeight:800,color:D.text}}>{p.name}</span>
-                      {p.team==="KIA"&&<span style={{fontSize:10,background:"#E31837",color:"#fff",borderRadius:4,padding:"1px 5px",fontWeight:700}}>KIA</span>}
-                    </div>
-                    <div style={{fontSize:11,color:D.textSub}}>{p.team}</div>
-                  </div>
-                  <div style={{textAlign:"right"}}>
-                    <div style={{fontSize:10,color:D.textSub}}>{p.label}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-      <div style={{position:"fixed",bottom:0,left:0,right:0,background:D.navBg,borderTop:`1px solid ${D.navBorder}`,display:"flex",paddingBottom:6,zIndex:50}}>
-        {TABS.map(t=>(
-          <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,padding:"4px 0",background:"transparent",display:"flex",flexDirection:"column",alignItems:"center",gap:3,color:tab===t.id?"#E31837":D.navText}}>
-            <span style={{fontSize:18}}>{t.icon}</span>
-            <span style={{fontSize:9,fontWeight:tab===t.id?700:400}}>{t.label}</span>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
+  // 스와이프 다운
+  let ty = null;
+  box.ontouchstart = e => { ty=e.touches[0].clientY; };
+  box.ontouchmove = e => { if(ty!==null&&e.touches[0].clientY-ty>0) e.preventDefault(); };
+  box.ontouchend = e => { if(ty!==null&&e.changedTouches[0].clientY-ty>60) closeModal(); ty=null; };
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+function closeModal() {
+  const box = document.getElementById('modal-box');
+  box.classList.add('closing');
+  setTimeout(()=>{
+    document.getElementById('modal-overlay').classList.remove('open');
+    box.classList.remove('closing');
+    state.modalGame=null;
+    document.body.style.overflow='';
+  },280);
+}
+
+function setModalLt(lt) { state.modalLt=lt; renderModal(D()); }
+
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if(e.target===document.getElementById('modal-overlay')) closeModal();
+});
+window.addEventListener('popstate', ()=>{ if(state.modalGame) closeModal(); });
+
+// ── 시계 ──
+setInterval(()=>{ state.clock=new Date(); document.getElementById('header').querySelector('[style*="font-size:15px"]') && render(); },1000);
+
+// ── 시작 ──
+render();
 </script>
 </body>
 </html>
+
