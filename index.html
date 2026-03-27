@@ -45,7 +45,6 @@
     body.dark .cal-day.today{background:rgba(255,255,255,0.18)}
     .cal-day.sat{color:#4FC3F7}
     .cal-day.sun{color:#EF5350}
-    .home-badge{font-size:7px;font-weight:800;color:#E31837;background:rgba(227,24,55,0.12);border-radius:3px;padding:0 3px;line-height:1.4}
     .inn-table{width:100%;border-collapse:collapse;font-size:12px;min-width:300px}
     .inn-table td{text-align:center;padding:6px 3px}
     .inn-table .team-cell{text-align:left;padding:8px 6px;font-size:11px;font-weight:700}
@@ -821,10 +820,15 @@ function renderHeader(d) {
 }
 
 function renderNav() {
-  const tabs=[{id:'cal',icon:'📅',label:'일정'},{id:'stand',icon:'🏆',label:'순위'},{id:'my',icon:'🙍',label:'마이페이지'}];
-  document.getElementById('nav').innerHTML = tabs.map(t =>
-    `<button class="${state.tab===t.id?'active':''}" onclick="setTab('${t.id}')">
-      <span class="icon">${t.icon}</span><span>${t.label}</span>
+  const tabDefs=[
+    {id:'cal', img:'https://raw.githubusercontent.com/Rianless/kbo/main/images/calender.png', label:'일정'},
+    {id:'stand', img:'https://raw.githubusercontent.com/Rianless/kbo/main/images/lank.png', label:'기록'},
+    {id:'my', img:'https://raw.githubusercontent.com/Rianless/kbo/main/images/mypage.png', label:'마이페이지'},
+  ];
+  document.getElementById('nav').innerHTML = tabDefs.map(t =>
+    `<button class="${state.tab===t.id?'active':''}" onclick="setTab('${t.id}')" style="flex:1;padding:4px 0;display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:none;cursor:pointer;font-family:'Noto Sans KR',sans-serif;font-size:9px;color:${state.tab===t.id?'#E31837':'rgba(0,0,0,0.4)'}">
+      <img src="${t.img}" style="width:22px;height:22px;object-fit:contain;opacity:${state.tab===t.id?'1':'0.4'}"/>
+      <span>${t.label}</span>
     </button>`
   ).join('');
 }
@@ -859,13 +863,23 @@ function renderCal(d) {
     const kg=kmap[i], isSel=ds===sel, isToday=ds===today;
     const dow=(f+i-1)%7, isPast=new Date(ds)<new Date('2026-03-28');
     const isHome=kg&&kg.home==='KIA', oppKey=kg?(isHome?kg.away:kg.home):null;
-    const dayColor=dow===5?'#4FC3F7':dow===6?'#EF5350':isSel?'#E31837':d.text;
-    const statusBadge = kg&&kg.status==='LIVE'?'<div style="font-size:6px;background:#E31837;color:#fff;border-radius:2px;padding:0 2px;font-weight:700;line-height:1.4">LIVE</div>':
-      kg&&kg.status==='FINAL'?'<div style="font-size:6px;background:rgba(0,0,0,0.3);color:#fff;border-radius:2px;padding:0 2px;font-weight:700;line-height:1.4">종료</div>':'';
+    const dayColor=dow===5?'#4FC3F7':dow===6?'#EF5350':d.text;
+    // KIA 홈경기: 빨간 동그라미, 원정: 테두리 없음
+    const isKiaHome = kg&&kg.home==='KIA';
+    const isKiaGame = !!kg&&!!oppKey;
+    // KIA 경기 결과 이모지
+    let resultEmoji = '';
+    if(kg&&kg.status==='FINAL') {
+      const kiaScore = isKiaHome?kg.homeScore:kg.awayScore;
+      const oppScore = isKiaHome?kg.awayScore:kg.homeScore;
+      if(kiaScore!=null&&oppScore!=null) resultEmoji = kiaScore>oppScore?'✅':'☑️';
+    }
+    const statusBadge = kg&&kg.status==='LIVE'?'<div style="font-size:6px;background:#E31837;color:#fff;border-radius:2px;padding:0 2px;font-weight:700;line-height:1.4">LIVE</div>':'';
+    // 날짜 스타일: 홈경기=빨간동그라미, 원정=기본, 선택=배경만
+    const dayExtraStyle = isKiaGame&&isKiaHome ? 'background:rgba(227,24,55,0.15);border-color:#E31837;' : '';
     cells+=`<div class="cal-cell${isSel?' sel':''}${isPast?' past':''}" onclick="selDate('${ds}')">
-      <div class="cal-day${isSel?' sel':''}${isToday?' today':''}${dow===5?' sat':dow===6?' sun':''}" style="color:${dayColor}">${i}</div>
-      ${kg&&oppKey?`<div style="display:flex;flex-direction:column;align-items:center;gap:1px">
-        <div style="height:11px;display:flex;align-items:center;justify-content:center">${isHome?`<div class="home-badge">홈</div>`:''}</div>
+      <div class="cal-day${isToday?' today':''}${dow===5?' sat':dow===6?' sun':''}" style="color:${dayColor};${dayExtraStyle}">${resultEmoji||i}</div>
+      ${isKiaGame?`<div style="display:flex;flex-direction:column;align-items:center;gap:1px">
         ${logo(oppKey,22)}
         ${statusBadge||`<div style="font-size:7px;color:${d.sub};font-weight:600;line-height:1">${kg.time}</div>`}
       </div>`:''}
@@ -1062,13 +1076,55 @@ function renderFavs(d) {
 }
 
 
+
+function renderKiaWins(d) {
+  const wins = SCH.filter(g => {
+    if(g.status !== 'FINAL') return false;
+    if(g.away !== 'KIA' && g.home !== 'KIA') return false;
+    const kiaScore = g.home==='KIA' ? g.homeScore : g.awayScore;
+    const oppScore = g.home==='KIA' ? g.awayScore : g.homeScore;
+    return kiaScore != null && oppScore != null && kiaScore > oppScore;
+  });
+  wins.sort((a,b) => b.date.localeCompare(a.date));
+
+  if(!wins.length) {
+    return '<div style="text-align:center;padding:60px 20px">'
+      + '<div style="font-size:40px;margin-bottom:12px">🏆</div>'
+      + '<div style="font-size:15px;font-weight:700;color:'+d.text+'">아직 승리 기록이 없어요</div>'
+      + '<div style="font-size:12px;color:'+d.sub+';margin-top:6px">개막 후 KIA가 승리하면 여기에 쌓여요!</div>'
+      + '</div>';
+  }
+
+  let html = '<div style="font-size:12px;font-weight:700;color:'+d.sub+';margin-bottom:12px">🏆 총 '+wins.length+'승</div>';
+  wins.forEach(function(g) {
+    const isHome = g.home === 'KIA';
+    const opp = isHome ? g.away : g.home;
+    const kiaScore = isHome ? g.homeScore : g.awayScore;
+    const oppScore = isHome ? g.awayScore : g.homeScore;
+    html += '<div class="card kia" onclick="openGameByKey(this)" data-date="'+g.date+'" data-away="'+g.away+'" data-home="'+g.home+'">';
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">';
+    html += '<span style="font-size:10px;color:'+d.sub+'">'+g.date+' · '+(isHome?'홈':'원정')+'</span>';
+    html += '<span style="font-size:11px;font-weight:700;color:#E31837">✅ 승리</span>';
+    html += '</div>';
+    html += '<div style="display:flex;align-items:center;justify-content:space-between">';
+    html += '<div style="display:flex;align-items:center;gap:8px;flex:1">'+logo('KIA',36)+'<span style="font-size:13px;font-weight:800;color:#ff6b6b">KIA 타이거즈</span></div>';
+    html += '<div style="text-align:center;padding:0 8px"><span style="font-size:22px;font-weight:900;color:#E31837">'+kiaScore+'</span><span style="font-size:12px;color:'+d.sub+'"> : </span><span style="font-size:22px;font-weight:900;color:'+d.text+'">'+oppScore+'</span></div>';
+    html += '<div style="display:flex;align-items:center;gap:8px;flex:1;flex-direction:row-reverse">'+logo(opp,36)+'<span style="font-size:13px;font-weight:700;color:'+d.text+';text-align:right">'+(T[opp]?T[opp].name:opp)+'</span></div>';
+    html += '</div></div>';
+  });
+  return html;
+}
+
 function renderMyPage(d) {
-  const myTabs = [{id:'fav',label:'⭐ 즐겨찾기'},{id:'memo',label:'📝 메모'}];
-  if(!state.myTab) state.myTab = 'fav';
-  const content = state.myTab === 'fav' ? renderFavs(d) : renderMemos(d);
+  const myTabs = [{id:'win',label:'🏆 KIA 승리'},{id:'fav',label:'⭐ 즐겨찾기'},{id:'memo',label:'📝 메모'}];
+  if(!state.myTab) state.myTab = 'win';
+  let content = '';
+  if(state.myTab==='fav') content = renderFavs(d);
+  else if(state.myTab==='memo') content = renderMemos(d);
+  else content = renderKiaWins(d);
   return `
-    <div style="display:flex;gap:8px;margin-bottom:16px">
-      ${myTabs.map(t=>`<button onclick="state.myTab='${t.id}';render()" style="flex:1;padding:9px 0;background:${state.myTab===t.id?'#E31837':'transparent'};border:1px solid ${state.myTab===t.id?'#E31837':d.cardB};color:${state.myTab===t.id?'#fff':d.text};border-radius:10px;font-size:13px;font-weight:700;font-family:'Noto Sans KR',sans-serif">${t.label}</button>`).join('')}
+    <div style="display:flex;gap:6px;margin-bottom:16px">
+      ${myTabs.map(t=>`<button onclick="state.myTab='${t.id}';render()" style="flex:1;padding:8px 0;background:${state.myTab===t.id?'#E31837':'transparent'};border:1px solid ${state.myTab===t.id?'#E31837':d.cardB};color:${state.myTab===t.id?'#fff':d.text};border-radius:10px;font-size:11px;font-weight:700;font-family:'Noto Sans KR',sans-serif">${t.label}</button>`).join('')}
     </div>
     ${content}`;
 }
