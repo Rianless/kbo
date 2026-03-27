@@ -36,10 +36,10 @@
     body.dark .card{background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.07)}
     .card.kia{background:rgba(227,24,55,0.08);border-color:rgba(227,24,55,0.25)}
     .cal-grid{display:grid;grid-template-columns:repeat(7,1fr)}
-    .cal-cell{min-height:68px;padding:3px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;position:relative}
+    .cal-cell{min-height:78px;padding:4px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;position:relative}
     .cal-cell.sel{background:rgba(227,24,55,0.15)}
     .cal-cell.past{opacity:0.4}
-    .cal-day{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;margin-top:2px;border:2px solid transparent;position:relative;z-index:1}
+    .cal-day{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;margin-top:2px;border:2px solid transparent;position:relative;z-index:1}
     .cal-day.sel{color:#E31837;border-color:#E31837}
     .cal-day.today{background:rgba(0,0,0,0.12)}
     body.dark .cal-day.today{background:rgba(255,255,255,0.18)}
@@ -823,7 +823,7 @@ function renderCal(d) {
   const dw = ['일','월','화','수','목','금','토'][new Date(yr,sm-1,sd).getDay()];
 
   let cells = '';
-  for(let i=0;i<f;i++) cells += `<div class="cal-cell" style="min-height:68px"></div>`;
+  for(let i=0;i<f;i++) cells += `<div class="cal-cell" style="min-height:78px"></div>`;
   for(let i=1;i<=days;i++) {
     const ds = `${yr}-${pad(mo)}-${pad(i)}`;
     const kg = kmap[i];
@@ -837,9 +837,9 @@ function renderCal(d) {
     cells += `<div class="cal-cell${isSel?' sel':''}${isPast?' past':''}" onclick="selDate('${ds}')">
       <div class="cal-day${isSel?' sel':''}${isToday?' today':''}${dow===5?' sat':dow===6?' sun':''}" style="color:${dayColor}">${i}</div>
       ${kg&&oppKey?`<div style="display:flex;flex-direction:column;align-items:center;gap:1px">
-        <div style="height:11px;display:flex;align-items:center;justify-content:center">${isHome?`<div class="home-badge">홈</div>`:''}</div>
-        ${logo(oppKey,22)}
-        <div style="font-size:7px;color:${d.sub};font-weight:600;line-height:1">${kg.time}</div>
+        <div style="height:13px;display:flex;align-items:center;justify-content:center">${isHome?`<div class="home-badge">홈</div>`:''}</div>
+        ${logo(oppKey,26)}
+        <div style="font-size:8px;color:${d.sub};font-weight:600;line-height:1">${kg.time}</div>
       </div>`:''}
     </div>`;
   }
@@ -904,7 +904,7 @@ function renderCal(d) {
     </div>
     <div style="background:${d.bg};border:1px solid ${d.bgB};border-radius:14px;overflow:hidden;margin-bottom:16px">
       <div class="cal-grid" style="border-bottom:1px solid ${d.bgB}">
-        ${WDAYS.map((w,i)=>`<div style="text-align:center;padding:8px 0;font-size:11px;font-weight:700;color:${i===5?'#4FC3F7':i===6?'#EF5350':d.sub}">${w}</div>`).join('')}
+        ${WDAYS.map((w,i)=>`<div style="text-align:center;padding:10px 0;font-size:13px;font-weight:700;color:${i===5?'#4FC3F7':i===6?'#EF5350':d.sub}">${w}</div>`).join('')}
       </div>
       <div class="cal-grid">${cells}</div>
     </div>
@@ -1139,6 +1139,43 @@ window.addEventListener('popstate', ()=>{ if(state.modalGame) closeModal(); });
 setInterval(()=>{ state.clock=new Date(); document.getElementById('header').querySelector('[style*="font-size:15px"]') && render(); },1000);
 
 // ── 시작 ──
+
+// ── 실시간 스코어 (Vercel API 경유) ──
+async function fetchTodayScores() {
+  const today = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const date = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
+
+  try {
+    const r = await fetch('/api/kboScores');
+    if(!r.ok) return;
+    const data = await r.json();
+    const games = data?.games || [];
+    if(!games.length) return;
+
+    games.forEach(g => {
+      const idx = SCH.findIndex(s => s.date===g.date && s.away===g.away && s.home===g.home);
+      if(idx !== -1) {
+        if(g.status) SCH[idx].status = g.status;
+        if(g.awayScore != null) SCH[idx].awayScore = g.awayScore;
+        if(g.homeScore != null) SCH[idx].homeScore = g.homeScore;
+        if(g.awayInnings) SCH[idx].awayInnings = g.awayInnings;
+        if(g.homeInnings) SCH[idx].homeInnings = g.homeInnings;
+        if(g.inning) SCH[idx].inning = g.inning;
+      }
+    });
+
+    if(state.sel === date) render();
+
+  } catch(e) {
+    console.log('스코어 갱신 실패:', e.message);
+  }
+}
+
+// 30초마다 스코어 갱신
+fetchTodayScores();
+setInterval(fetchTodayScores, 30000);
+
 render();
 </script>
 </body>
