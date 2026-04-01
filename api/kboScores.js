@@ -82,6 +82,8 @@ export default async function handler(req, res) {
   async function fetchLineup(gameId, inning) {
     const inn = inning || 1;
     const urls = [
+      `https://api-gw.sports.naver.com/schedule/games/${gameId}/preview`,
+      `https://api-gw.sports.naver.com/schedule/games/${gameId}/starting-lineup`,
       `https://api-gw.sports.naver.com/schedule/games/${gameId}/lineup`,
       `https://api-gw.sports.naver.com/schedule/games/${gameId}/game-polling?inning=${inn}&isHighlight=false`,
     ];
@@ -90,7 +92,15 @@ export default async function handler(req, res) {
         const r = await fetch(url, { headers: HEADERS });
         if (!r.ok) continue;
         const data = await r.json();
-        if (data?.result) return data.result;
+        if (!data?.result) continue;
+        const res = data.result;
+        // 어떤 URL이 유효한 라인업을 줬는지 로깅
+        const hasData = res.lineUpData || res.awayLineup || res.homeLineup || res.game;
+        console.log('[lineup url]', url.split('/').slice(-1)[0], '→ keys:', Object.keys(res), 'hasData:', !!hasData);
+        if (hasData) {
+          console.log('[lineup game keys]', JSON.stringify(Object.keys(res.game||{})).slice(0,300));
+          return res;
+        }
       } catch(e) {}
     }
     return null;
@@ -232,6 +242,27 @@ export default async function handler(req, res) {
       homeStarter,
       winPitcher: gameData.winPitcherName || g.winPitcherName || null,
       losePitcher: gameData.losePitcherName || g.losePitcherName || null,
+      lineup: detail ? (() => {
+        // 다양한 경로 커버: lineUpData, game-polling의 game 객체, 직접 필드
+        const gp = detail.game || {};
+        const lu = detail.lineUpData || gp.lineUpData || {};
+        const awayL = lu.awayLineup || lu.awayTeamLineup
+          || gp.awayLineup || gp.awayTeamLineup
+          || detail.awayLineup || detail.awayTeamLineup
+          || detail.lineup?.away || {};
+        const homeL = lu.homeLineup || lu.homeTeamLineup
+          || gp.homeLineup || gp.homeTeamLineup
+          || detail.homeLineup || detail.homeTeamLineup
+          || detail.lineup?.home || {};
+        const awayBatters = awayL.batter || awayL.batters || awayL.batterList || awayL.players || [];
+        const homeBatters = homeL.batter || homeL.batters || homeL.batterList || homeL.players || [];
+        console.log('[lineup parse] awayB:', awayBatters.length, 'homeB:', homeBatters.length, 'gp keys:', Object.keys(gp).slice(0,10));
+        if (!awayBatters.length && !homeBatters.length) return null;
+        return {
+          away: { batters: awayBatters, pitcher: awayL.pitcher || awayL.pitchers || [] },
+          home: { batters: homeBatters, pitcher: homeL.pitcher || homeL.pitchers || [] },
+        };
+      })() : null,
     };
   }
 
