@@ -2040,7 +2040,7 @@ function renderModal(d) {
   const isSch=!g.status||g.status==='BEFORE'||g.status==='SCHEDULED';
   const hasLU=!!g.lineup;
   const lt=state.modalLt;
-  const cur=buildDisplayLineup(lt==='away'?(g.lineup?.away?.batter||g.lineup?.away?.batters||[]):(g.lineup?.home?.batter||g.lineup?.home?.batters||[]));
+  const cur=buildDisplayLineup(lt==='away'?(g.lineup?.away?.batters||[]):(g.lineup?.home?.batters||[]));
   const ct=lt==='away'?aw:hw;
   const kiaHome=g.home==='KIA';
   const lTeam=kiaHome?g.home:g.away, rTeam=kiaHome?g.away:g.home;
@@ -2055,8 +2055,8 @@ function renderModal(d) {
   const isLive=g.status==='LIVE', isFinal=g.status==='FINAL';
 
   // 이닝 스코어 테이블
-  const lInn = (lTeam===g.away ? g.awayInnings : g.homeInnings) || Array(9).fill(-1);
-  const rInn = (rTeam===g.away ? g.awayInnings : g.homeInnings) || Array(9).fill(-1);
+  const lInn = lTeam===g.away ? g.awayInnings : g.homeInnings;
+  const rInn = rTeam===g.away ? g.awayInnings : g.homeInnings;
   // LIVE/FINAL이면 스코어나 이닝 배열 중 하나라도 있으면 표시
   const hasInn = !isSch && lInn && (
     lInn.some(x=>x>=0) ||
@@ -2483,7 +2483,7 @@ function renderModal(d) {
       </div>
 
       <!-- ── 라인업 섹션 (타순 그리드) ── -->
-      ${hasLU ? `<div style="margin-bottom:18px;margin-left:16px;margin-right:16px">
+      ${hasLU ? `<div style="margin-bottom:18px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
           <div style="display:flex;align-items:center;gap:6px">
             <span style="font-size:15px">🧢</span>
@@ -2519,7 +2519,7 @@ function renderModal(d) {
           </div>
         </div>
       </div>` : ''}
-      <div style="margin-bottom:18px;margin-left:16px;margin-right:16px">
+      <div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
           <div style="display:flex;align-items:center;gap:6px">
             <span style="font-size:15px">📝</span>
@@ -2533,7 +2533,7 @@ function renderModal(d) {
             return `<button onclick="saveMemoField('watch','${v}')" style="flex:1;padding:7px 0;background:${sel?'#E31837':'transparent'};border:1.5px solid ${sel?'#E31837':d.bgB};color:${sel?'#fff':d.sub};border-radius:8px;font-size:12px;font-weight:700;font-family:'Noto Sans KR',sans-serif">${v==='직관'?'⚾ 직관':v==='집관'?'📺 집관':'— 미시청'}</button>`;
           }).join('')}
         </div>
-        <textarea id="memo-input" placeholder="이 경기에 대한 생각이나 메모를 남겨보세요 ✍️" style="width:100%;min-height:90px;padding:12px;background:${d.bg};border:1px solid ${d.bgB};border-radius:12px;color:${d.text};font-size:13px;line-height:1.6;resize:none;-webkit-user-select:text;user-select:text;box-sizing:border-box">${memoData.text||''}</textarea>
+        <textarea id="memo-input" placeholder="이 경기에 대한 생각이나 메모를 남겨보세요 ✍️" style="width:100%;min-height:90px;padding:12px;background:${d.bg};border:1px solid ${d.bgB};border-radius:12px;color:${d.text};font-size:13px;line-height:1.6;resize:none;-webkit-user-select:text;user-select:text">${memoData.text||''}</textarea>
         <div style="margin-top:8px">
           <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:${d.bg};border:1px solid ${d.bgB};border-radius:10px">
             <span style="font-size:13px">📷</span>
@@ -3533,7 +3533,19 @@ function renderRelayText(relays, away, home) {
     return `<div style="padding:11px 16px;border-bottom:1px solid ${dark?'rgba(255,255,255,0.055)':'rgba(0,0,0,0.055)'};display:flex;align-items:flex-start;gap:10px">
       <span style="flex-shrink:0;font-size:10px;font-weight:700;color:${bdColor};background:${bdBg};border:1px solid ${bdColor}33;border-radius:5px;padding:2px 7px;margin-top:2px;white-space:nowrap">${badge||'　'}</span>
       <div style="flex:1;min-width:0">
-        <div style="font-size:13px;color:${dark?'#fff':'#0A0E1A'};line-height:1.5">${title}</div>
+        <div style="font-size:13px;color:${dark?'#fff':'#0A0E1A'};line-height:1.5">${title}${(()=>{
+          // 투구 아이템에서 구종/구속 표시
+          // 마지막 투구(결과 공) - type=1이고 stuff 있는 항목 중 마지막
+          const pitchOpts = opts.filter(o => o.type === 1 && o.stuff && o.stuff !== '');
+          const pitchOpt = pitchOpts.length > 0 ? pitchOpts[pitchOpts.length - 1] : null;
+          if (!pitchOpt) return '';
+          const stuff = pitchOpt.stuff || '';
+          const speed = pitchOpt.speed ? pitchOpt.speed + 'km' : '';
+          const pitchNum = pitchOpt.pitchNum ? pitchOpt.pitchNum + '구 ' : '';
+          if (!stuff) return '';
+          const stuffColor = stuff==='직구'||stuff==='투심'?'#E31837': stuff==='슬라이더'||stuff==='커터'?'#0078ff': stuff==='커브'||stuff==='너클커브'?'#9C27B0': stuff==='포크'||stuff==='체인지업'?'#FF6600': '#555';
+          return ` <span style="font-size:11px;font-weight:700;color:${stuffColor};background:${stuffColor}18;border:1px solid ${stuffColor}44;border-radius:4px;padding:1px 5px;margin-left:4px">${pitchNum}${stuff}${speed?' '+speed:''}</span>`;
+        })()}</div>
         ${scoreDisp?`<div style="margin-top:3px">${scoreDisp}</div>`:''}
       </div>
     </div>`;
