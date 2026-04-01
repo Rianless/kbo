@@ -271,6 +271,70 @@ export default async function handler(req, res) {
     const inning = req.query.inning ? parseInt(req.query.inning) : null;
     const action = req.query.action || '';
 
+    // ── 선수 기록 (타자/투수) ──
+    if (action === 'playerStats') {
+      const tab = req.query.tab || 'hitter';
+      const teamCode = req.query.teamCode || 'HT';
+      const seasonCode = req.query.seasonCode || '2026';
+
+      // 네이버 API 응답에서 선수 배열 추출 (다양한 필드명 커버)
+      const extractPlayers = (data) => {
+        const r = data?.result || {};
+        return r.seasonPlayerStats || r.playerList || r.players || r.list || null;
+      };
+
+      // 시도할 URL 목록 (403 우회용 다중 엔드포인트)
+      const STAT_URLS = [
+        // PC 웹 API
+        `https://api-gw.sports.naver.com/stats/kbo/player-stats?seasonCode=${seasonCode}&tab=${tab}&teamCode=${teamCode}&page=1&pageSize=50`,
+        // 모바일 API v2
+        `https://m.sports.naver.com/api/kbaseball/stats/player?seasonCode=${seasonCode}&tab=${tab}&teamCode=${teamCode}&page=1&pageSize=50`,
+        // 구버전 엔드포인트
+        `https://sports.news.naver.com/kbaseball/stats/index.nhn?type=${tab}&teamCode=${teamCode}&year=${seasonCode}`,
+      ];
+
+      const HEADER_SETS = [
+        // 모바일 UA
+        {
+          'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+          'Referer': 'https://m.sports.naver.com/kbaseball/stats/team',
+          'Accept': 'application/json, text/plain, */*',
+          'Accept-Language': 'ko-KR,ko;q=0.9',
+          'Origin': 'https://m.sports.naver.com',
+        },
+        // PC UA
+        {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          'Referer': 'https://sports.naver.com/kbaseball/stats/team',
+          'Accept': 'application/json, text/plain, */*',
+          'Accept-Language': 'ko-KR,ko;q=0.9',
+          'Origin': 'https://sports.naver.com',
+        },
+      ];
+
+      let players = null;
+      let lastErr = '';
+
+      outer:
+      for (const headers of HEADER_SETS) {
+        for (const url of STAT_URLS) {
+          try {
+            const r = await fetch(url, { headers });
+            console.log(`[playerStats] ${url.split('?')[0]} → ${r.status}`);
+            if (!r.ok) { lastErr = `${r.status}`; continue; }
+            const data = await r.json();
+            const p = extractPlayers(data);
+            if (p && p.length > 0) { players = p; break outer; }
+            console.log('[playerStats] 응답 필드:', JSON.stringify(Object.keys(data?.result||data||{})));
+          } catch(e) { lastErr = e.message; }
+        }
+      }
+
+      if (!players) return res.status(502).json({ error: `선수 데이터를 가져오지 못했어요 (${lastErr})` });
+
+      return res.status(200).json({ result: { seasonPlayerStats: players } });
+    }
+
     if (gameId && action === 'lineup') {
       // game-polling으로 textRelayData 포함 전체 응답 가져오기
       const inn = inning || 1;
