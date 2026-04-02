@@ -67,6 +67,8 @@
     /* 사진 전체화면 뷰어 */
     #photo-viewer{position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.95);display:none;align-items:center;justify-content:center;flex-direction:column;animation:fadeIn 0.2s}
     #photo-viewer.open{display:flex}
+    #wallpaper-panel{display:none}
+    #wallpaper-panel.open{display:flex}
     #photo-viewer img{max-width:100%;max-height:85vh;object-fit:contain;border-radius:8px;touch-action:pinch-zoom}
     #photo-viewer-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,0.15);color:#fff;border:none;border-radius:50%;width:40px;height:40px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
     #photo-viewer-nav{position:absolute;bottom:24px;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:12px}
@@ -77,6 +79,7 @@
     #relay-panel.open{display:flex}
     #relay-box{width:100%;max-width:520px;height:95vh;background:#fff;border-radius:22px 22px 0 0;display:flex;flex-direction:column;animation:slideUp 0.3s ease;box-shadow:0 -4px 16px rgba(0,0,0,0.15);touch-action:pan-y}
     #relay-box.closing{animation:slideDown 0.28s ease forwards}
+    #wallpaper-box.closing{animation:slideDown 0.28s ease forwards}
     body.dark #relay-box{background:#0F1525;color:#fff}
     #relay-header{padding:14px 18px 10px;border-bottom:1px solid rgba(0,0,0,0.08);flex-shrink:0}
     body.dark #relay-header{border-color:rgba(255,255,255,0.08)}
@@ -792,6 +795,7 @@ let state = {
   tab:'cal', dark:false, yr:_kst0.getFullYear(), mo:_kst0.getMonth()+1, sel:_today0,
   lcat:'batting', modalGame:null, modalLt:'away', clock:new Date(),
   memoTab: false, myTab: null, myTabInitialized: false,
+  recordTab: 'game', playerStats: null, playerStatsLoading: false, playerStatsError: null,
 };
 // 중계 전체보기 전역 변수
 let _relayGameId = null, _relayAway = '', _relayHome = '', _relayInn = 1, _relayData = null, _relayInterval = null;
@@ -1285,7 +1289,189 @@ function renderCal(d) {
     <div id="list-section">${listHtml}</div>`;
 }
 
+// ── 선수 기록 fetch (타자/투수) ──
+window._fetchPlayerStats = async function(tab) {
+  state.playerStatsLoading = true;
+  state.playerStatsError = null;
+  render();
+  try {
+    const type = tab === 'hitter' ? 'hitter' : 'pitcher';
+    // 1차: 백엔드 프록시 (/api/kboScores?action=playerStats)
+    // 2차: 네이버 API 직접 호출
+    let players = null;
+
+    // 네이버 API 응답에서 선수 배열 추출 (다양한 필드명 커버)
+    const extractPlayers = (d) => {
+      const r = d?.result || {};
+      return r.seasonPlayerStats || r.playerList || r.players || r.list || null;
+    };
+
+    // 백엔드 프록시 (다중 URL fallback 포함)
+    const proxyUrl = `/api/kboScores?action=playerStats&tab=${type}&teamCode=HT&seasonCode=2026`;
+    const pr = await fetch(proxyUrl);
+    if (!pr.ok) {
+      const errData = await pr.json().catch(() => ({}));
+      throw new Error(errData.error || `서버 오류 ${pr.status}`);
+    }
+    const pd = await pr.json();
+    players = extractPlayers(pd);
+    if (!players) throw new Error('선수 데이터 형식 오류');
+
+    state.playerStats = { tab, data: players };
+  } catch(e) {
+    state.playerStatsError = e.message || '데이터를 불러오지 못했어요 😢';
+    state.playerStats = null;
+  }
+  state.playerStatsLoading = false;
+  render();
+};
+
+function renderHitterTable(d, players) {
+  if (!players.length) return '<div style="text-align:center;padding:40px 20px">'
+    + '<div style="font-size:32px;margin-bottom:8px">📋</div>'
+    + '<div style="font-size:13px;color:'+d.sub+';margin-bottom:12px">선수 데이터가 없어요</div>'
+    + '<button onclick="window._fetchPlayerStats(\'hitter\')" style="padding:8px 20px;background:#E31837;color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:700;font-family:\'Noto Sans KR\',sans-serif;cursor:pointer">🔄 다시 불러오기</button>'
+    + '</div>';
+  const cols = [
+    {key:'playerName',label:'선수',w:'88px'},
+    {key:'hitterHra',label:'타율',w:'52px',fmt:v=>v!=null?Number(v).toFixed(3).replace(/^0/,''):'—'},
+    {key:'hitterHit',label:'안타',w:'38px'},
+    {key:'hitterHr',label:'HR',w:'36px'},
+    {key:'hitterRbi',label:'타점',w:'38px'},
+    {key:'hitterRun',label:'득점',w:'38px'},
+    {key:'hitterObp',label:'출루율',w:'52px',fmt:v=>v!=null?Number(v).toFixed(3).replace(/^0/,''):'—'},
+    {key:'hitterOps',label:'OPS',w:'52px',fmt:v=>v!=null?Number(v).toFixed(3).replace(/^0/,''):'—'},
+  ];
+  let h = '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px;border-radius:12px;overflow:hidden">';
+  h += '<table style="width:100%;border-collapse:collapse;font-size:11px;min-width:360px">';
+  h += '<thead><tr style="background:#E31837">';
+  cols.forEach(c => {
+    h += `<th style="padding:8px 5px;text-align:${c.key==='playerName'?'left':'center'};color:#fff;font-weight:800;font-size:10px;white-space:nowrap;width:${c.w}">${c.label}</th>`;
+  });
+  h += '</tr></thead><tbody>';
+  players.forEach((p, i) => {
+    const bg = i%2===0 ? (d.dark?'rgba(255,255,255,0.02)':'rgba(0,0,0,0.015)') : 'transparent';
+    const isKia = true; // 이미 KIA 필터
+    h += `<tr style="background:${bg};border-bottom:1px solid ${d.bgB}">`;
+    cols.forEach(c => {
+      const val = p[c.key];
+      const display = c.fmt ? c.fmt(val) : (val!=null?val:'—');
+      const isName = c.key === 'playerName';
+      h += `<td style="padding:8px 5px;text-align:${isName?'left':'center'};color:${isName?d.text:d.sub};font-weight:${isName?'700':'400'};white-space:nowrap">${isName?('<span style="font-size:11px">'+display+'</span>'):display}</td>`;
+    });
+    h += '</tr>';
+  });
+  h += '</tbody></table></div>';
+  return h;
+}
+
+function renderPitcherTable(d, players) {
+  if (!players.length) return '<div style="text-align:center;padding:40px 20px">'
+    + '<div style="font-size:32px;margin-bottom:8px">📋</div>'
+    + '<div style="font-size:13px;color:'+d.sub+';margin-bottom:12px">선수 데이터가 없어요</div>'
+    + '<button onclick="window._fetchPlayerStats(\'pitcher\')" style="padding:8px 20px;background:#E31837;color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:700;font-family:\'Noto Sans KR\',sans-serif;cursor:pointer">🔄 다시 불러오기</button>'
+    + '</div>';
+  // 네이버 API 투수 필드명 — pitcherEra / pitcherWin / pitcherLose / pitcherSv(세이브) / pitcherHld(홀드) / pitcherIp / pitcherKk / pitcherWhip
+  // 실제 필드명은 첫 번째 선수 객체의 키를 검사해 동적으로 매핑
+  const sample = players[0] || {};
+  const sv  = 'pitcherSv'  in sample ? 'pitcherSv'  : ('pitcherSave' in sample ? 'pitcherSave' : 'pitcherSv');
+  const hld = 'pitcherHld' in sample ? 'pitcherHld' : ('pitcherHold' in sample ? 'pitcherHold' : 'pitcherHld');
+  const ip  = 'pitcherIp'  in sample ? 'pitcherIp'  : ('pitcherInning' in sample ? 'pitcherInning' : 'pitcherIp');
+
+  const cols = [
+    {key:'playerName', label:'선수',  w:'88px'},
+    {key:'pitcherEra', label:'ERA',   w:'48px', fmt:v=>v!=null?Number(v).toFixed(2):'—'},
+    {key:'pitcherWin', label:'승',    w:'34px'},
+    {key:'pitcherLose',label:'패',    w:'34px'},
+    {key:sv,           label:'세',    w:'34px'},
+    {key:hld,          label:'홀',    w:'34px'},
+    {key:ip,           label:'이닝',  w:'46px', fmt:v=>v!=null?Number(v).toFixed(1):'—'},
+    {key:'pitcherKk',  label:'K',     w:'34px'},
+    {key:'pitcherWhip',label:'WHIP',  w:'48px', fmt:v=>v!=null?Number(v).toFixed(2):'—'},
+  ];
+  let h = '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px;border-radius:12px;overflow:hidden">';
+  h += '<table style="width:100%;border-collapse:collapse;font-size:11px;min-width:420px">';
+  h += '<thead><tr style="background:#E31837">';
+  cols.forEach(c => {
+    h += `<th style="padding:8px 5px;text-align:${c.key==='playerName'?'left':'center'};color:#fff;font-weight:800;font-size:10px;white-space:nowrap;width:${c.w}">${c.label}</th>`;
+  });
+  h += '</tr></thead><tbody>';
+  players.forEach((p, i) => {
+    const bg = i%2===0 ? (d.dark?'rgba(255,255,255,0.02)':'rgba(0,0,0,0.015)') : 'transparent';
+    h += `<tr style="background:${bg};border-bottom:1px solid ${d.bgB}">`;
+    cols.forEach(c => {
+      const val = p[c.key];
+      const display = c.fmt ? c.fmt(val) : (val!=null?val:'—');
+      const isName = c.key === 'playerName';
+      h += `<td style="padding:8px 5px;text-align:${isName?'left':'center'};color:${isName?d.text:d.sub};font-weight:${isName?'700':'400'};white-space:nowrap">${isName?('<span style="font-size:11px">'+display+'</span>'):display}</td>`;
+    });
+    h += '</tr>';
+  });
+  h += '</tbody></table></div>';
+  return h;
+}
+
 function renderBaseballRecord(d) {
+  const rt = state.recordTab || 'game';
+
+  // ── 서브탭 헤더 없음 (경기기록만) ──
+  let html = '';
+
+  if (true) {
+    html += _renderGameRecord(d);
+    return html;
+  }
+
+  // ── 선수 기록 탭 ──
+  if (state.playerStatsLoading) {
+    html += '<div style="text-align:center;padding:60px 20px">'
+      + '<div style="font-size:32px;margin-bottom:12px;animation:spin 1s linear infinite;display:inline-block">⚾</div>'
+      + '<div style="font-size:13px;color:'+d.sub+';margin-top:8px">불러오는 중...</div></div>';
+    return html;
+  }
+
+  if (state.playerStatsError) {
+    html += '<div style="text-align:center;padding:60px 20px">'
+      + '<div style="font-size:40px;margin-bottom:12px">😢</div>'
+      + '<div style="font-size:14px;font-weight:700;color:'+d.text+'">데이터를 불러오지 못했어요</div>'
+      + '<div style="font-size:11px;color:'+d.sub+';margin-top:6px;word-break:break-all">'+state.playerStatsError+'</div>'
+      + '<button onclick="window._fetchPlayerStats(\''+rt+'\')" style="margin-top:16px;padding:10px 24px;background:#E31837;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;font-family:\'Noto Sans KR\',sans-serif;cursor:pointer">다시 시도</button>'
+      + '</div>';
+    return html;
+  }
+
+  if (!state.playerStats || state.playerStats.tab !== rt) {
+    // 데이터 없으면 자동 fetch
+    setTimeout(() => window._fetchPlayerStats(rt), 0);
+    html += '<div style="text-align:center;padding:60px 20px">'
+      + '<div style="font-size:32px;margin-bottom:12px;animation:spin 1s linear infinite;display:inline-block">⚾</div>'
+      + '<div style="font-size:13px;color:'+d.sub+';margin-top:8px">불러오는 중...</div></div>';
+    return html;
+  }
+
+  const players = state.playerStats.data;
+  html += '<div style="font-size:11px;color:'+d.sub+';margin-bottom:10px;text-align:right">2026 시즌 · KIA 타이거즈 <button onclick="window._fetchPlayerStats(\''+rt+'\')" style="margin-left:6px;background:none;border:1px solid '+d.bgB+';border-radius:6px;padding:2px 8px;font-size:10px;color:'+d.sub+';font-family:\'Noto Sans KR\',sans-serif;cursor:pointer">🔄 새로고침</button></div>';
+
+  if (rt === 'hitter') {
+    html += renderHitterTable(d, players);
+  } else {
+    html += renderPitcherTable(d, players);
+  }
+
+  return html;
+}
+
+window._setRecordTab = function(t) {
+  state.recordTab = t;
+  // 탭 전환 시 기존 데이터 지우고 새로 fetch
+  if (t !== 'game') {
+    state.playerStats = null;
+    state.playerStatsError = null;
+  }
+  render();
+};
+
+function _renderGameRecord(d) {
   const kiaGames = SCH.filter(g =>
     g.status === 'FINAL' && (g.away === 'KIA' || g.home === 'KIA')
   ).sort((a,b) => b.date.localeCompare(a.date));
@@ -1298,7 +1484,7 @@ function renderBaseballRecord(d) {
       + '</div>';
   }
 
-  let html = '<div style="font-size:13px;font-weight:800;color:'+d.text+';margin-bottom:16px">⚾ 경기 기록 <span style="font-size:11px;color:'+d.sub+';font-weight:400">'+kiaGames.length+'경기</span></div>';
+  let html = '<div style="font-size:13px;font-weight:800;color:'+d.text+';margin-bottom:16px">경기 기록 <span style="font-size:11px;color:'+d.sub+';font-weight:400">'+kiaGames.length+'경기</span></div>';
 
   kiaGames.forEach(function(g) {
     const isHome = g.home === 'KIA';
@@ -1452,6 +1638,7 @@ function renderBaseballRecord(d) {
 
   return html;
 }
+// _renderGameRecord 끝 (renderBaseballRecord에서 호출됨)
 
 window.saveRecordMemoEl = function(el) {
   const date = el.dataset.date, away = el.dataset.away, home = el.dataset.home;
@@ -1840,6 +2027,430 @@ function renderKiaWins(d) {
   return html;
 }
 
+// ── 배경화면 만들기 (순수 Canvas 2D, 외부 의존성 없음) ──
+let _wpState = {
+  bgType: 'gradient',
+  bgColor: '#1a1a2e',
+  gradient: 'linear-gradient(160deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%)',
+  bgImage: null,
+  calScale: 1.3,
+  calOffsetY: 0,
+  textMode: 'dark',  // 'dark'=흰글자, 'light'=검은글자
+  calBg: null,       // 달력 배경색 (null=없음)
+};
+
+function wpLoadBgImage(file) {
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    _wpState.bgType = 'image';
+    _wpState.bgImage = img;
+    // 업로드 버튼 텍스트 업데이트
+    const btn = document.getElementById('wp-photo-btn');
+    if (btn) btn.textContent = '🖼️ ' + file.name.slice(0,12) + (file.name.length>12?'…':'');
+    drawWallpaperCanvas();
+  };
+  img.src = url;
+}
+
+const WP_PRESETS = [
+  {label:'🌙 딥 네이비', gradient:'linear-gradient(160deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%)'},
+  {label:'🔴 타이거즈', gradient:'linear-gradient(160deg,#1a0008 0%,#3d0010 50%,#7a0020 100%)'},
+  {label:'🌲 다크 그린', gradient:'linear-gradient(160deg,#0b1f0e 0%,#1a3d22 50%,#0d2b18 100%)'},
+  {label:'🌑 퓨어 블랙', gradient:'linear-gradient(160deg,#000000 0%,#111111 100%)'},
+  {label:'🌠 미드나잇', gradient:'linear-gradient(160deg,#0d0221 0%,#190c40 50%,#0d1b6a 100%)'},
+  {label:'🍂 딥 브라운', gradient:'linear-gradient(160deg,#1a0f00 0%,#3d2200 50%,#5a3300 100%)'},
+];
+
+// 팀 약칭 (캔버스에 텍스트로 표시)
+// 팀 로고 캐시 — fetch→blob URL로 CORS taint 완전 우회
+const _wpLogoCache = {};
+const _wpLogoLoading = {};
+
+function wpPreloadLogos() {
+  // 즉시 캔버스 그리고, 로고는 백그라운드 로드
+  Object.keys(T).forEach(key => {
+    if (_wpLogoCache[key] || _wpLogoLoading[key]) return;
+    _wpLogoLoading[key] = true;
+    fetch(T[key].img)
+      .then(r => r.blob())
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        const img = new Image();
+        img.onload = () => {
+          _wpLogoCache[key] = img;
+          _wpLogoLoading[key] = false;
+          if (document.getElementById('wallpaper-panel').classList.contains('open')) {
+            drawWallpaperCanvas();
+          }
+        };
+        img.onerror = () => { _wpLogoLoading[key] = false; };
+        img.src = url;
+      })
+      .catch(() => { _wpLogoLoading[key] = false; });
+  });
+  return Promise.resolve();
+}
+
+// 프리셋 선택 — render() 없이 DOM만 업데이트
+function wpSetCalBg(color) {
+  _wpState.calBg = color;
+  ['none','white','black'].forEach(id => {
+    const btn = document.getElementById('wp-calbg-' + id);
+    if (btn) btn.style.border = '2px solid transparent';
+  });
+  if (color === null) {
+    const btn = document.getElementById('wp-calbg-none');
+    if (btn) btn.style.border = '2px solid #E31837';
+  } else if (color === 'rgba(255,255,255,0.88)') {
+    const btn = document.getElementById('wp-calbg-white');
+    if (btn) btn.style.border = '2px solid #E31837';
+  } else if (color === 'rgba(0,0,0,0.55)') {
+    const btn = document.getElementById('wp-calbg-black');
+    if (btn) btn.style.border = '2px solid #E31837';
+  }
+  drawWallpaperCanvas();
+}
+
+function wpSetTextMode(mode) {
+  _wpState.textMode = mode;
+  const darkBtn = document.getElementById('wp-text-dark');
+  const lightBtn = document.getElementById('wp-text-light');
+  if (darkBtn) {
+    darkBtn.style.border = mode === 'dark' ? '2px solid #E31837' : '2px solid transparent';
+    darkBtn.style.background = mode === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.06)';
+  }
+  if (lightBtn) {
+    lightBtn.style.border = mode === 'light' ? '2px solid #E31837' : '2px solid transparent';
+    lightBtn.style.background = mode === 'light' ? '#f0f0f0' : 'rgba(240,240,240,0.7)';
+  }
+  drawWallpaperCanvas();
+}
+
+function wpSelectPreset(pi) {
+  _wpState.bgType = 'gradient';
+  _wpState.gradient = WP_PRESETS[pi].gradient;
+  _wpState.bgImage = null;
+  WP_PRESETS.forEach((_, i) => {
+    const btn = document.getElementById('wp-preset-' + i);
+    if (btn) btn.style.border = '2px solid ' + (i === pi ? '#E31837' : 'transparent');
+  });
+  drawWallpaperCanvas();
+}
+
+function wpUpdateLabels() {
+  const scaleEl = document.getElementById('wp-label-scale');
+  const offsetEl = document.getElementById('wp-label-offset');
+  const scaleSlider = document.getElementById('wp-slider-scale');
+  const offsetSlider = document.getElementById('wp-slider-offset');
+  if (scaleEl) scaleEl.textContent = '📐 달력 크기: ' + Math.round(_wpState.calScale * 100) + '%';
+  if (offsetEl) offsetEl.textContent = '↕️ 달력 위치: ' + (_wpState.calOffsetY > 0 ? '+' : '') + _wpState.calOffsetY + '%';
+  if (scaleSlider) scaleSlider.value = Math.round(_wpState.calScale * 100);
+  if (offsetSlider) offsetSlider.value = _wpState.calOffsetY;
+  drawWallpaperCanvas();
+}
+
+function renderWallpaperSection(d) {
+  return `
+    <div style="padding-top:4px">
+      <div style="font-size:12px;color:${d.sub};margin-bottom:14px;line-height:1.6">
+        달력 배경화면을 만들어보세요.<br/>아래 버튼에서 색상·크기·위치를 조절할 수 있어요.
+      </div>
+      <button onclick="openWallpaperMaker()" style="width:100%;padding:14px;background:linear-gradient(135deg,#E31837,#c0102a);color:#fff;border-radius:12px;font-size:15px;font-weight:900;font-family:'Noto Sans KR',sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(227,24,55,0.35)">
+        🖼️ 미리보기 &amp; 저장
+      </button>
+    </div>`;
+}
+
+async function openWallpaperMaker() {
+  document.getElementById('wallpaper-panel').classList.add('open');
+
+  // 프리셋 버튼 채우기
+  const row = document.getElementById('wp-preset-row');
+  if (row) {
+    row.innerHTML = WP_PRESETS.map((p, i) =>
+      `<button id="wp-preset-${i}" onclick="wpSelectPreset(${i})"
+        style="padding:7px 12px;background:${p.gradient};border:2px solid ${_wpState.gradient===p.gradient?'#E31837':'transparent'};color:#fff;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap;flex-shrink:0;cursor:pointer;font-family:'Noto Sans KR',sans-serif">
+        ${p.label}
+      </button>`
+    ).join('') +
+    `<label style="display:flex;align-items:center;gap:5px;padding:7px 12px;border:2px solid rgba(255,255,255,0.2);border-radius:10px;font-size:11px;font-weight:700;color:#fff;cursor:pointer;white-space:nowrap;flex-shrink:0">
+      🎨 직접
+      <input type="color" value="${_wpState.bgColor}" onchange="_wpState.bgType='solid';_wpState.bgColor=this.value;_wpState.bgImage=null;drawWallpaperCanvas()" style="width:22px;height:22px;border:none;background:none;cursor:pointer"/>
+    </label>
+    <label id="wp-photo-btn" style="padding:7px 12px;border:2px solid rgba(255,255,255,0.2);border-radius:10px;font-size:11px;font-weight:700;color:#fff;cursor:pointer;white-space:nowrap;flex-shrink:0;background:rgba(255,255,255,0.07)">
+      📷 내 사진
+      <input type="file" accept="image/*" onchange="wpLoadBgImage(this.files[0])" style="display:none"/>
+    </label>`;
+  }
+
+  // 슬라이더 + 토글 초기값 동기화
+  wpUpdateLabels();
+  wpSetTextMode(_wpState.textMode);
+  wpSetCalBg(_wpState.calBg);
+
+  const loadingEl = document.getElementById('wp-loading');
+  loadingEl.style.display = 'flex';
+  loadingEl.textContent = '로고 불러오는 중…';
+  document.getElementById('wp-save-btn').disabled = true;
+  document.getElementById('wp-save-btn').style.opacity = '0.5';
+  await wpPreloadLogos().catch(() => {});
+  drawWallpaperCanvas();
+}
+
+function closeWallpaperPanel() {
+  const box = document.getElementById('wallpaper-box');
+  box.classList.add('closing');
+  setTimeout(() => {
+    document.getElementById('wallpaper-panel').classList.remove('open');
+    box.classList.remove('closing');
+  }, 280);
+}
+
+function drawWallpaperCanvas() {
+  const ws = _wpState;
+  const canvas = document.getElementById('wallpaper-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  // S24+ 2x 고해상도 (2160x4680) — 저장 시 최고 화질
+  const W = 2160, H = 4680;
+  canvas.width = W;
+  canvas.height = H;
+
+  // 배경
+  if (ws.bgType === 'image' && ws.bgImage) {
+    // cover 방식으로 이미지 꽉 채우기
+    const img = ws.bgImage;
+    const scale = Math.max(W / img.naturalWidth, H / img.naturalHeight);
+    const dw = img.naturalWidth * scale;
+    const dh = img.naturalHeight * scale;
+    ctx.drawImage(img, (W - dw) / 2, (H - dh) / 2, dw, dh);
+  } else if (ws.bgType === 'solid') {
+    ctx.fillStyle = ws.bgColor;
+    ctx.fillRect(0, 0, W, H);
+  } else {
+    ctx.fillStyle = wpParseGradient(ctx, ws.gradient, W, H);
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  // 달력
+  try {
+    wpDrawCalendar(ctx, W, H, ws.calScale, ws.calOffsetY);
+  } catch(e) {
+    console.error('wpDrawCalendar error:', e);
+  } finally {
+    const loadingEl = document.getElementById('wp-loading');
+    if (loadingEl) loadingEl.style.display = 'none';
+    const btn = document.getElementById('wp-save-btn');
+    if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+  }
+}
+
+function wpParseGradient(ctx, str, W, H) {
+  const stops = [];
+  const re = /(#[0-9a-fA-F]{6})/g;
+  let m;
+  while ((m = re.exec(str)) !== null) stops.push(m[1]);
+  const am = str.match(/(\d+)deg/);
+  const angle = am ? parseInt(am[1]) : 160;
+  const rad = (angle - 90) * Math.PI / 180;
+  const cx = W / 2, cy = H / 2;
+  const len = Math.sqrt(W*W + H*H) / 2;
+  const grd = ctx.createLinearGradient(
+    cx - Math.cos(rad)*len, cy - Math.sin(rad)*len,
+    cx + Math.cos(rad)*len, cy + Math.sin(rad)*len
+  );
+  stops.forEach((c, i) => grd.addColorStop(i / Math.max(stops.length-1, 1), c));
+  return grd;
+}
+
+function wpDrawCalendar(ctx, W, H, userScale, offsetYPct) {
+  const {yr, mo} = state;
+  const isLight = _wpState.textMode === 'light';
+  const C = {
+    title:            isLight ? 'rgba(0,0,0,0.9)'   : '#ffffff',
+    wdaySun:          isLight ? '#d32f2f'            : '#ff8a80',
+    wdaySat:          isLight ? '#1565c0'            : '#80d8ff',
+    wday:             isLight ? 'rgba(0,0,0,0.45)'   : 'rgba(255,255,255,0.5)',
+    daySun:           isLight ? '#d32f2f'            : '#ff8a80',
+    daySat:           isLight ? '#1565c0'            : '#80d8ff',
+    day:              isLight ? 'rgba(0,0,0,0.9)'    : 'rgba(255,255,255,0.9)',
+    homeCircleFill:   'rgba(227,24,55,0.25)',
+    homeCircleStroke: 'rgba(227,24,55,0.85)',
+    legendText:       isLight ? 'rgba(0,0,0,0.5)'   : 'rgba(255,255,255,0.55)',
+    legendDiv:        isLight ? 'rgba(0,0,0,0.1)'   : 'rgba(255,255,255,0.12)',
+    watermark:        isLight ? 'rgba(0,0,0,0.18)'  : 'rgba(255,255,255,0.2)',
+    fallback:         isLight ? 'rgba(0,0,0,0.6)'   : 'rgba(255,255,255,0.7)',
+  };
+  const WDAYS = ['일','월','화','수','목','금','토'];
+  const f = fdow(yr, mo), days = dim(yr, mo);
+  const _kn = new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Seoul'}));
+  const today = _kn.getFullYear()+'-'+String(_kn.getMonth()+1).padStart(2,'0')+'-'+String(_kn.getDate()).padStart(2,'0');
+
+  const kmap = {};
+  SCH.forEach(g => {
+    if (g.away !== 'KIA' && g.home !== 'KIA') return;
+    const [gy, gm, gd] = g.date.split('-').map(Number);
+    if (gy === yr && gm === mo) kmap[gd] = g;
+  });
+
+  // ── 기본 단위: W 기준 ──
+  const BASE = W; // 2160
+  const colW  = BASE * 0.94 / 7;
+  const calW  = colW * 7;
+  const rowH  = BASE * 0.17;   // 행 높이
+  const headerH = BASE * 0.10; // 월 제목 영역
+  const wdayH   = BASE * 0.055;// 요일 헤더
+  const legendH = BASE * 0.055;
+  const rows = Math.ceil((f + days) / 7);
+  const calTotalH = headerH + wdayH + rows * rowH + legendH + BASE * 0.015;
+  const bgPad = _wpState.calBg ? BASE * 0.028 : 0;
+
+  // ── scale + offset 적용 ──
+  const totalW = (calW + bgPad * 2) * userScale;
+  const totalH = (calTotalH + bgPad * 2) * userScale;
+  const startX = (W - totalW) / 2;
+  const baseY  = (H - totalH) / 2;
+  const startY = baseY + (offsetYPct / 100) * H;
+
+  ctx.save();
+  ctx.translate(startX + bgPad * userScale, startY + bgPad * userScale);
+  ctx.scale(userScale, userScale);
+
+  // ── 달력 배경 패널 ──
+  if (_wpState.calBg) {
+    const r = bgPad * 1.3;
+    const bx = -bgPad, by = -bgPad;
+    const bw = calW + bgPad * 2, bh = calTotalH + bgPad * 2;
+    ctx.beginPath();
+    ctx.moveTo(bx + r, by);
+    ctx.lineTo(bx + bw - r, by);
+    ctx.arcTo(bx + bw, by, bx + bw, by + r, r);
+    ctx.lineTo(bx + bw, by + bh - r);
+    ctx.arcTo(bx + bw, by + bh, bx + bw - r, by + bh, r);
+    ctx.lineTo(bx + r, by + bh);
+    ctx.arcTo(bx, by + bh, bx, by + bh - r, r);
+    ctx.lineTo(bx, by + r);
+    ctx.arcTo(bx, by, bx + r, by, r);
+    ctx.closePath();
+    ctx.fillStyle = _wpState.calBg;
+    ctx.fill();
+  }
+
+  // ── 월 타이틀 ──
+  ctx.font = `900 ${BASE*0.048}px 'Noto Sans KR', sans-serif`;
+  ctx.fillStyle = C.title;
+  ctx.textAlign = 'center';
+  ctx.fillText(`${yr}년 ${mo}월`, calW / 2, headerH * 0.72);
+
+  // ── 요일 헤더 ──
+  WDAYS.forEach((w, i) => {
+    ctx.font = `700 ${BASE*0.020}px 'Noto Sans KR', sans-serif`;
+    ctx.fillStyle = i === 0 ? C.wdaySun : i === 6 ? C.wdaySat : C.wday;
+    ctx.textAlign = 'center';
+    ctx.fillText(w, i * colW + colW / 2, headerH + wdayH * 0.78);
+  });
+
+  // ── 날짜 셀 ──
+  for (let i = 1; i <= days; i++) {
+    const ds = `${yr}-${pad(mo)}-${pad(i)}`;
+    const kg = kmap[i];
+    const cellIdx = f + i - 1;
+    const col = cellIdx % 7;
+    const row = Math.floor(cellIdx / 7);
+    const cx = col * colW + colW / 2;
+    const cy = headerH + wdayH + row * rowH;
+
+    const isKiaHome = kg && kg.home === 'KIA';
+    const isKiaAway = kg && kg.away === 'KIA';
+    const isKiaGame = isKiaHome || isKiaAway;
+    const oppKey = isKiaHome ? kg.away : isKiaAway ? kg.home : null;
+    const dow = col;
+
+    const circleR = BASE * 0.020;
+    const circleY = cy + rowH * 0.22;
+
+    // 홈경기 원
+    if (isKiaHome) {
+      ctx.beginPath();
+      ctx.arc(cx, circleY, circleR, 0, Math.PI * 2);
+      ctx.fillStyle = C.homeCircleFill;
+      ctx.fill();
+      ctx.strokeStyle = C.homeCircleStroke;
+      ctx.lineWidth = BASE * 0.003;
+      ctx.stroke();
+    }
+
+    // 날짜 숫자
+    const dayColor = dow === 0 ? C.daySun : dow === 6 ? C.daySat : C.day;
+    ctx.font = `500 ${BASE*0.024}px 'Noto Sans KR', sans-serif`;
+    ctx.fillStyle = dayColor;
+    ctx.textAlign = 'center';
+    ctx.fillText(String(i), cx, circleY + BASE*0.009);
+
+    // 상대팀 로고
+    if (isKiaGame && oppKey) {
+      const logoImg = _wpLogoCache[oppKey];
+      const logoSize = BASE * 0.065;
+      const logoX = cx - logoSize / 2;
+      const logoY = cy + rowH * 0.46;
+      if (logoImg) {
+        ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize);
+      } else {
+        ctx.font = `700 ${BASE*0.017}px 'Noto Sans KR', sans-serif`;
+        ctx.fillStyle = C.fallback;
+        ctx.textAlign = 'center';
+        ctx.fillText(oppKey, cx, logoY + logoSize * 0.6);
+      }
+    }
+  }
+
+  // ── 구분선 (달력 아래) ──
+  const legendY = headerH + wdayH + rows * rowH + BASE * 0.008;
+  ctx.strokeStyle = C.legendDiv;
+  ctx.lineWidth = BASE * 0.002;
+  ctx.beginPath();
+  ctx.moveTo(0, legendY);
+  ctx.lineTo(calW, legendY);
+  ctx.stroke();
+
+  // ── 범례 ──
+  const ly = legendY + legendH * 0.65;
+  const legR = BASE * 0.011;
+  const legFS = BASE * 0.018;
+
+  ctx.beginPath();
+  ctx.arc(legR * 2.5, ly - legR * 0.7, legR, 0, Math.PI * 2);
+  ctx.fillStyle = C.homeCircleFill;
+  ctx.fill();
+  ctx.strokeStyle = C.homeCircleStroke;
+  ctx.lineWidth = BASE * 0.002;
+  ctx.stroke();
+  ctx.font = `500 ${legFS}px 'Noto Sans KR', sans-serif`;
+  ctx.fillStyle = C.legendText;
+  ctx.textAlign = 'left';
+  ctx.fillText('홈경기', legR * 5, ly);
+
+  ctx.font = `700 ${legFS * 0.9}px 'Noto Sans KR', sans-serif`;
+  ctx.fillStyle = C.watermark;
+  ctx.textAlign = 'right';
+  ctx.fillText('horang2', calW, ly);
+
+  ctx.restore();
+}
+
+
+function saveWallpaper() {
+  const canvas = document.getElementById('wallpaper-canvas');
+  const a = document.createElement('a');
+  a.download = `KIA_${state.yr}년${state.mo}월_배경화면.png`;
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+}
+
+
 function renderMyPage(d) {
   const profile = getProfile();
   const nickname = profile.nickname || '타이거즈 팬';
@@ -1851,6 +2462,7 @@ function renderMyPage(d) {
     {id:'rank', label:'📊 순위',   fn: renderStand},
     {id:'fav',  label:'⭐ 즐겨찾기', fn: renderFavs},
     {id:'memo', label:'📝 메모',   fn: renderTodoMemo},
+    {id:'wallpaper', label:'🖼️ 배경화면 만들기', fn: renderWallpaperSection},
   ];
 
   const cardStyle = `background:${d.card};border:1.5px solid ${d.cardB};border-radius:16px`;
@@ -2055,8 +2667,8 @@ function renderModal(d) {
   const isLive=g.status==='LIVE', isFinal=g.status==='FINAL';
 
   // 이닝 스코어 테이블
-  const lInn = lTeam===g.away ? g.awayInnings : g.homeInnings;
-  const rInn = rTeam===g.away ? g.awayInnings : g.homeInnings;
+  const lInn = (lTeam===g.away ? g.awayInnings : g.homeInnings) || Array(9).fill(-1);
+  const rInn = (rTeam===g.away ? g.awayInnings : g.homeInnings) || Array(9).fill(-1);
   // LIVE/FINAL이면 스코어나 이닝 배열 중 하나라도 있으면 표시
   const hasInn = !isSch && lInn && (
     lInn.some(x=>x>=0) ||
@@ -2154,13 +2766,17 @@ function renderModal(d) {
       </div>
     </div>
     <div style="padding:18px">
-      <div style="margin-bottom:18px">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
-          <span style="font-size:15px">📊</span>
-          <span style="font-size:13px;font-weight:800;color:${d.text}">이닝별 스코어</span>
+      ${g.stad?`<div style="margin-bottom:18px">
+        <div style="background:${d.bg};border:1px solid ${d.bgB};border-radius:14px;padding:12px 16px">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+            <span style="font-size:13px">📍</span>
+            <span style="font-size:11px;font-weight:700;color:${d.sub}">${g.stad} · 현재 날씨</span>
+          </div>
+          <div id="modal-weather-${g.gameId}" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:11px;color:${d.sub}">불러오는 중...</span>
+          </div>
         </div>
-        <div style="background:${d.bg};border:1px solid ${d.bgB};border-radius:12px;padding:4px">${inningHtml}</div>
-      </div>
+      </div>`:''}
       ${(g.awayStarter||g.homeStarter||g.winPitcher||g.losePitcher||g.awayPitcher||g.homePitcher)?`<div style="margin-bottom:18px">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
           <span style="font-size:15px">⚾</span>
@@ -2237,17 +2853,13 @@ function renderModal(d) {
           })()}
         </div>
       </div>`:''}
-      ${g.stad?`<div style="margin-bottom:18px">
-        <div style="background:${d.bg};border:1px solid ${d.bgB};border-radius:14px;padding:12px 16px">
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
-            <span style="font-size:13px">📍</span>
-            <span style="font-size:11px;font-weight:700;color:${d.sub}">${g.stad} · 현재 날씨</span>
-          </div>
-          <div id="modal-weather-${g.gameId}" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-            <span style="font-size:11px;color:${d.sub}">불러오는 중...</span>
-          </div>
+      <div style="margin-bottom:18px">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
+          <span style="font-size:15px">📊</span>
+          <span style="font-size:13px;font-weight:800;color:${d.text}">이닝별 스코어</span>
         </div>
-      </div>`:''}
+        <div style="background:${d.bg};border:1px solid ${d.bgB};border-radius:12px;padding:4px">${inningHtml}</div>
+      </div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
           <div style="display:flex;align-items:center;gap:6px">
             <span style="font-size:15px">🧢</span>
@@ -2483,7 +3095,7 @@ function renderModal(d) {
       </div>
 
       <!-- ── 라인업 섹션 (타순 그리드) ── -->
-      ${hasLU ? `<div style="margin-bottom:18px">
+      ${hasLU ? `<div style="margin-bottom:18px;margin-left:16px;margin-right:16px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
           <div style="display:flex;align-items:center;gap:6px">
             <span style="font-size:15px">🧢</span>
@@ -2519,7 +3131,7 @@ function renderModal(d) {
           </div>
         </div>
       </div>` : ''}
-      <div>
+      <div style="margin-left:16px;margin-right:16px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
           <div style="display:flex;align-items:center;gap:6px">
             <span style="font-size:15px">📝</span>
@@ -2533,7 +3145,7 @@ function renderModal(d) {
             return `<button onclick="saveMemoField('watch','${v}')" style="flex:1;padding:7px 0;background:${sel?'#E31837':'transparent'};border:1.5px solid ${sel?'#E31837':d.bgB};color:${sel?'#fff':d.sub};border-radius:8px;font-size:12px;font-weight:700;font-family:'Noto Sans KR',sans-serif">${v==='직관'?'⚾ 직관':v==='집관'?'📺 집관':'— 미시청'}</button>`;
           }).join('')}
         </div>
-        <textarea id="memo-input" placeholder="이 경기에 대한 생각이나 메모를 남겨보세요 ✍️" style="width:100%;min-height:90px;padding:12px;background:${d.bg};border:1px solid ${d.bgB};border-radius:12px;color:${d.text};font-size:13px;line-height:1.6;resize:none;-webkit-user-select:text;user-select:text">${memoData.text||''}</textarea>
+        <textarea id="memo-input" placeholder="이 경기에 대한 생각이나 메모를 남겨보세요 ✍️" style="width:100%;min-height:90px;padding:12px;background:${d.bg};border:1px solid ${d.bgB};border-radius:12px;color:${d.text};font-size:13px;line-height:1.6;resize:none;-webkit-user-select:text;user-select:text;box-sizing:border-box">${memoData.text||''}</textarea>
         <div style="margin-top:8px">
           <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:${d.bg};border:1px solid ${d.bgB};border-radius:10px">
             <span style="font-size:13px">📷</span>
@@ -3534,8 +4146,6 @@ function renderRelayText(relays, away, home) {
       <span style="flex-shrink:0;font-size:10px;font-weight:700;color:${bdColor};background:${bdBg};border:1px solid ${bdColor}33;border-radius:5px;padding:2px 7px;margin-top:2px;white-space:nowrap">${badge||'　'}</span>
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;color:${dark?'#fff':'#0A0E1A'};line-height:1.5">${title}${(()=>{
-          // 투구 아이템에서 구종/구속 표시
-          // 마지막 투구(결과 공) - type=1이고 stuff 있는 항목 중 마지막
           const pitchOpts = opts.filter(o => o.type === 1 && o.stuff && o.stuff !== '');
           const pitchOpt = pitchOpts.length > 0 ? pitchOpts[pitchOpts.length - 1] : null;
           if (!pitchOpt) return '';
@@ -4253,6 +4863,85 @@ function _compressAll(files, cb) {
 render();
 _initFetch.then(() => render()).catch(() => {});
 </script>
+
+<!-- 배경화면 메이커 패널 -->
+<div id="wallpaper-panel" style="position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);align-items:flex-end;justify-content:center;animation:fadeIn 0.2s">
+<div id="wallpaper-box" style="width:100%;max-width:520px;height:96vh;background:#0a0a16;border-radius:22px 22px 0 0;display:flex;flex-direction:column;animation:slideUp 0.3s ease;overflow:hidden">
+  <!-- 헤더 -->
+  <div style="padding:16px 18px 12px;border-bottom:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+    <div>
+      <div style="font-size:16px;font-weight:900;color:#fff">🖼️ 배경화면 미리보기</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-top:2px">갤럭시 S24+ · 저장 후 갤러리에서 배경 설정</div>
+    </div>
+    <button onclick="closeWallpaperPanel()" style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.1);color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer">×</button>
+  </div>
+
+  <!-- 스크롤 영역 -->
+  <div style="flex:1;overflow-y:auto;padding:16px 16px 32px;-webkit-overflow-scrolling:touch">
+
+    <!-- 배경 색상 프리셋 -->
+    <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.5);margin-bottom:8px">🎨 배경 색상</div>
+    <div id="wp-preset-row" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;margin-bottom:16px;-webkit-overflow-scrolling:touch">
+      <!-- JS로 채워짐 -->
+    </div>
+
+    <!-- 글자 색 토글 -->
+    <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.5);margin-bottom:8px">🔤 달력 글자색</div>
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <button id="wp-text-dark" onclick="wpSetTextMode('dark')" style="flex:1;padding:9px;background:rgba(255,255,255,0.15);border:2px solid #E31837;border-radius:10px;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif">🌙 흰색 글자</button>
+      <button id="wp-text-light" onclick="wpSetTextMode('light')" style="flex:1;padding:9px;background:#f0f0f0;border:2px solid transparent;border-radius:10px;color:#222;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif">☀️ 검은 글자</button>
+    </div>
+
+    <!-- 달력 배경 -->
+    <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.5);margin-bottom:8px">🗓️ 달력 배경색</div>
+    <div style="display:flex;gap:8px;margin-bottom:16px;align-items:center">
+      <button onclick="wpSetCalBg(null)" id="wp-calbg-none" style="padding:8px 14px;background:rgba(255,255,255,0.08);border:2px solid #E31837;border-radius:10px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap">없음</button>
+      <button onclick="wpSetCalBg('rgba(255,255,255,0.88)')" id="wp-calbg-white" style="padding:8px 14px;background:#fff;border:2px solid transparent;border-radius:10px;color:#333;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap">흰색</button>
+      <button onclick="wpSetCalBg('rgba(0,0,0,0.55)')" id="wp-calbg-black" style="padding:8px 14px;background:rgba(0,0,0,0.6);border:2px solid transparent;border-radius:10px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;white-space:nowrap">검정</button>
+      <label style="padding:8px 12px;background:rgba(255,255,255,0.08);border:2px solid transparent;border-radius:10px;color:#fff;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px">
+        직접
+        <input type="color" value="#ffffff" oninput="wpSetCalBg(this.value)" style="width:22px;height:22px;border:none;background:none;cursor:pointer"/>
+      </label>
+    </div>
+
+    <!-- 달력 크기 -->
+    <div id="wp-label-scale" style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.5);margin-bottom:8px">📐 달력 크기: 100%</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <button onclick="_wpState.calScale=Math.max(0.4,parseFloat((_wpState.calScale-0.05).toFixed(2)));wpUpdateLabels()" style="width:36px;height:36px;background:rgba(255,255,255,0.1);border:none;border-radius:8px;font-size:20px;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">−</button>
+      <input id="wp-slider-scale" type="range" min="40" max="140" value="130" oninput="_wpState.calScale=this.value/100;wpUpdateLabels()" style="flex:1;accent-color:#E31837"/>
+      <button onclick="_wpState.calScale=Math.min(1.4,parseFloat((_wpState.calScale+0.05).toFixed(2)));wpUpdateLabels()" style="width:36px;height:36px;background:rgba(255,255,255,0.1);border:none;border-radius:8px;font-size:20px;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">+</button>
+    </div>
+
+    <!-- 달력 위치 -->
+    <div id="wp-label-offset" style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.5);margin-bottom:8px">↕️ 달력 위치: 0%</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+      <button onclick="_wpState.calOffsetY=Math.max(-40,_wpState.calOffsetY-5);wpUpdateLabels()" style="width:36px;height:36px;background:rgba(255,255,255,0.1);border:none;border-radius:8px;font-size:18px;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">↑</button>
+      <input id="wp-slider-offset" type="range" min="-40" max="40" value="0" oninput="_wpState.calOffsetY=parseInt(this.value);wpUpdateLabels()" style="flex:1;accent-color:#E31837"/>
+      <button onclick="_wpState.calOffsetY=Math.min(40,_wpState.calOffsetY+5);wpUpdateLabels()" style="width:36px;height:36px;background:rgba(255,255,255,0.1);border:none;border-radius:8px;font-size:18px;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">↓</button>
+    </div>
+
+    <!-- 폰 프레임 + 캔버스 -->
+    <div style="display:flex;justify-content:center;margin-bottom:14px">
+      <div style="position:relative;width:180px">
+        <div style="border:3px solid rgba(255,255,255,0.25);border-radius:28px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.6)">
+          <div style="position:absolute;top:6px;left:50%;transform:translateX(-50%);width:50px;height:6px;background:rgba(0,0,0,0.8);border-radius:3px;z-index:10"></div>
+          <canvas id="wallpaper-canvas" style="display:block;width:180px;height:390px;image-rendering:crisp-edges"></canvas>
+        </div>
+        <div id="wp-loading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);border-radius:28px;color:#fff;font-size:12px;font-weight:700">
+          로고 불러오는 중…
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size:11px;color:rgba(255,255,255,0.35);text-align:center;margin-bottom:16px;line-height:1.6">PNG로 저장 후 갤러리 앱에서 배경 설정</div>
+
+    <!-- 저장 버튼 -->
+    <button id="wp-save-btn" onclick="saveWallpaper()" disabled style="width:100%;padding:15px;background:linear-gradient(135deg,#E31837,#c0102a);color:#fff;border-radius:14px;font-size:16px;font-weight:900;font-family:'Noto Sans KR',sans-serif;cursor:pointer;box-shadow:0 4px 18px rgba(227,24,55,0.4);opacity:0.5;transition:opacity 0.3s">
+      📥 배경화면 저장
+    </button>
+  </div>
+</div>
+</div>
 
 <script>
 if ('serviceWorker' in navigator) {
